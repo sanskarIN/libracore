@@ -1,0 +1,48 @@
+# Java / Maven
+backend/target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/timing.properties
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+backend/src/main/resources/application-local.yml
+
+# IDE / editor
+.idea/
+.vscode/
+*.iml
+.project
+.classpath
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / runtime
+*.log
+logs/
+*.pid
+
+# Test / coverage
+frontend/coverage/
+backend/target/site/
+playwright-report/
+test-results/
+
+# Local data / backups
+.local/
+backups/
+*.dump
+*.sql.gz
