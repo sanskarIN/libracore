@@ -51,20 +51,36 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Install frontend dependencies
+      - name: Verify release version
+        run: node scripts/check-version.mjs "${GITHUB_REF_NAME}"
+
+      - name: Require committed frontend lockfile
+        run: test -f frontend/package-lock.json
+
+      - name: Install frontend dependencies reproducibly
         working-directory: frontend
-        run: npm install --ignore-scripts
+        run: npm ci --ignore-scripts
 
       - name: Verify frontend
         working-directory: frontend
-        run: npm run lint && npm run typecheck && npm run test:run && npm run build
+        run: npm run check
 
       - name: Package frontend
         run: tar -C frontend -czf libracore-web-${GITHUB_REF_NAME}.tar.gz dist
 
       - name: Collect backend artifact
-        run: cp backend/target/libracore-backend-0.1.0-SNAPSHOT.jar libracore-backend-${GITHUB_REF_NAME}.jar
+        shell: bash
+        run: |
+          set -euo pipefail
+          backend_jar="$(find backend/target -maxdepth 1 -type f -name 'libracore-backend-*.jar' ! -name '*.original' | head -n 1)"
+          if [[ -z "$backend_jar" ]]; then
+            echo "No packaged LibraCore backend JAR was found." >&2
+            exit 1
+          fi
+          cp "$backend_jar" "libracore-backend-${GITHUB_REF_NAME}.jar"
 
       - name: Create checksums
         run: sha256sum libracore-backend-${GITHUB_REF_NAME}.jar libracore-web-${GITHUB_REF_NAME}.tar.gz > SHA256SUMS.txt
