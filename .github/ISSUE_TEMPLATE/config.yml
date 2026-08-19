@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: mailto:sanskarin@outlook.in
+    about: Report exploitable security issues privately instead of opening a public issue.
+  - name: Support guidance
+    url: https://github.com/sanskarIN/libracore/blob/main/SUPPORT.md
+    about: Read setup, troubleshooting, support, and safe-reporting guidance first.
