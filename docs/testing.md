@@ -15,24 +15,25 @@ This must compile the application, run unit/integration tests configured by Mave
 
 ### Frontend
 
+Until `frontend/package-lock.json` is committed and synchronized:
+
 ```bash
 cd frontend
-npm ci
-npm run lint
-npm run typecheck
-npm run test:run
-npm run build
+npm install
+npm run check
 ```
+
+Once the lockfile exists on the checked-out commit, replace `npm install` with `npm ci` for the clean/reproducible dependency-install step. `npm run check` runs lint, strict type checking, deterministic Vitest execution, and a production build.
 
 Vitest tests cover pure utilities and state/storage edge cases. New regression-prone logic should be moved into testable functions rather than buried in event handlers.
 
 ## Test layers
 
-- **Unit:** normalization, ISBN validation, CSV codec, fine policy calculations, formatting/session/theme utilities.
-- **Service/integration:** circulation transactions, reservations, member/account ownership, fine settlement, imports, database constraints and security boundaries.
+- **Unit:** normalization, ISBN validation, CSV codec, fine policy calculations, formatting/session/theme/API utilities.
+- **Service/integration:** circulation transactions, reservations, member/account ownership, fine settlement, staff account administration, imports, database constraints and security boundaries.
 - **HTTP/security:** authentication, role checks, validation errors, ownership restrictions, CORS/security behavior.
 - **UI/component:** state rendering, form validation, role-aware navigation, accessible names and keyboard interaction.
-- **End-to-end:** sign in, catalog lookup, issue/return, reservation/cancellation, member self-service, reports/import/export.
+- **End-to-end:** sign in, catalog lookup, member management, issue/return, reservation/cancellation, staff account administration, member self-service, reports/import/export.
 - **Operational:** clean migration, packaged startup/health, backup restore drill.
 
 ## Regression policy
@@ -51,6 +52,9 @@ Automated scanning is useful but insufficient. Before stable release, manually v
 
 Run dependency/security automation and review authentication/authorization-sensitive changes manually. Secret scanning should be enabled at the repository/host level where available. Never paste real credentials into test fixtures.
 
-## Current limitation
+## Current limitations
 
-Until browser-level E2E automation is committed, primary web journeys require a documented manual smoke pass in addition to automated frontend/backend checks. This limitation is tracked in `ROADMAP.md` rather than hidden.
+- Browser-level E2E automation is not yet committed, so primary web journeys still require a documented manual smoke pass in addition to automated frontend/backend checks.
+- A committed frontend transitive lockfile is still required before `npm ci` can become the canonical clean-checkout command.
+
+These limitations are tracked in `ROADMAP.md` and `what_changed.md` rather than hidden.
