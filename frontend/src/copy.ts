@@ -1,0 +1,37 @@
+export const copy = {
+  appName: 'LibraCore',
+  appTagline: 'Library operations, clearly connected.',
+  madeBy: 'Made by the Sanskar',
+  navigation: {
+    dashboard: 'Dashboard',
+    catalog: 'Catalog',
+    members: 'Members',
+    circulation: 'Circulation',
+    reservations: 'Reservations',
+    reports: 'Reports',
+    settings: 'Settings',
+  },
+  actions: {
+    signIn: 'Sign in',
+    signOut: 'Sign out',
+    search: 'Search',
+    refresh: 'Refresh',
+    save: 'Save',
+    cancel: 'Cancel',
+    close: 'Close',
+    retry: 'Try again',
+    loadMore: 'Load more',
+  },
+  states: {
+    loading: 'Loading…',
+    empty: 'Nothing to show yet.',
+    offline: 'The server is currently unreachable.',
+  },
+  contacts: {
+    businessPrimary: 'sanskarin@outlook.in',
+    businessSecondary: 'sanskarin.business@gmail.com',
+    support: 'supportramsandesh@gmail.com',
+    github: 'https://github.com/sanskarIN',
+    funding: 'https://buymeacoffee.com/sanskarIN',
+  },
+} as const
