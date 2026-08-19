@@ -47,6 +47,13 @@ jobs:
         working-directory: backend
         run: mvn -B --no-transfer-progress clean verify
 
+      - name: Require committed frontend lockfile
+        run: |
+          if [ ! -f frontend/package-lock.json ]; then
+            echo "frontend/package-lock.json must be committed before creating a release tag." >&2
+            exit 1
+          fi
+
       - name: Set up Node.js 24
         uses: actions/setup-node@v5
         with:
@@ -56,9 +63,6 @@ jobs:
 
       - name: Verify release version
         run: node scripts/check-version.mjs "${GITHUB_REF_NAME}"
-
-      - name: Require committed frontend lockfile
-        run: test -f frontend/package-lock.json
 
       - name: Install frontend dependencies reproducibly
         working-directory: frontend
