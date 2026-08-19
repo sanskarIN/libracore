@@ -1,25 +1,25 @@
 # Repository Reference
 
-This document describes every tracked source/configuration/documentation file in the LibraCore repository at the 2026-08-19 final-audit checkpoint. Directories themselves are organizational and are not listed as files.
+This document describes every tracked source/configuration/documentation file in the LibraCore repository at the 2026-08-19 **2.0.12 release-candidate** checkpoint. Directories themselves are organizational and are not listed as files.
 
 ## Root files
 
 - `.editorconfig` — cross-editor whitespace/encoding conventions.
 - `.env.example` — placeholder-only environment/configuration contract for local/deployment setup.
 - `.gitattributes` — Git text/line-ending behavior.
-- `.gitignore` — excludes local secrets, build output, IDE state, dependencies, and other generated files.
-- `CHANGELOG.md` — notable delivered changes by release/development line.
+- `.gitignore` — excludes local secrets, build output, IDE state, dependencies, and generated files.
+- `CHANGELOG.md` — notable delivered changes, including the 2.0.12 release-candidate line and open release gates.
 - `CODE_OF_CONDUCT.md` — community participation and enforcement expectations.
 - `CONTRIBUTING.md` — contributor setup, verification, engineering, commit, and security rules.
 - `LICENSE` — MIT license text.
 - `PRIVACY.md` — data categories, local/browser storage, export/backup privacy, retention, and operator responsibilities.
-- `README.md` — project overview, features, current stack, setup, architecture, quality, support, and navigation into deeper docs.
-- `ROADMAP.md` — future hardening/product milestones and stable-release criteria.
+- `README.md` — project overview, current 2.0.12 source status, features, stack, setup, architecture, quality, support, and documentation navigation.
+- `ROADMAP.md` — 2.0.12 release closure plus later operational/product hardening milestones.
 - `SECURITY.md` — supported-version posture, private vulnerability reporting, security expectations, and deployment responsibility.
 - `SUPPORT.md` — support channels, safe bug-report content, and troubleshooting pointers.
 - `THREAT_MODEL.md` — assets, trust boundaries, threats, mitigations, abuse cases, residual risks, and review triggers.
 - `compose.yml` — development PostgreSQL service definition.
-- `what_changed.md` — final/cross-session engineering handoff and verification checkpoint; maintained after this reference.
+- `what_changed.md` — canonical cross-session engineering handoff and verification checkpoint.
 
 ## GitHub repository automation and governance
 
@@ -29,15 +29,17 @@ This document describes every tracked source/configuration/documentation file in
 - `.github/ISSUE_TEMPLATE/bug_report.yml` — structured, secret-safe bug report form.
 - `.github/ISSUE_TEMPLATE/feature_request.yml` — structured feature proposal form with impact considerations.
 - `.github/ISSUE_TEMPLATE/config.yml` — issue-form routing to private security reporting and support guidance.
-- `.github/workflows/backend-ci.yml` — Java/PostgreSQL backend CI, Maven verification, packaged startup, and health check.
-- `.github/workflows/frontend-ci.yml` — Node frontend gate; currently bootstraps a lockfile, installs dependencies, then runs lint/typecheck/tests/build and can commit the generated lock on `main` when Actions permissions allow.
+- `.github/workflows/backend-ci.yml` — Java/PostgreSQL backend CI, Maven verification, version-independent packaged-JAR startup, Flyway startup, and health check.
 - `.github/workflows/codeql.yml` — scheduled/push/PR CodeQL analysis for Java and JavaScript/TypeScript.
 - `.github/workflows/dependency-review.yml` — pull-request dependency-change review for newly introduced vulnerable dependencies.
-- `.github/workflows/release.yml` — tagged release verification, backend/frontend packaging, checksums, and GitHub Release publication.
+- `.github/workflows/frontend-ci.yml` — read-only frontend quality gate that requires the committed npm lockfile, uses `npm ci`, verifies manifest versions, and runs the aggregate frontend check.
+- `.github/workflows/lockfile-bootstrap.yml` — explicit maintainer-triggered workflow that generates/reviews through verification and commits `frontend/package-lock.json` when GitHub Actions write permission is available.
+- `.github/workflows/release.yml` — tagged release verification; requires a lockfile, checks tag/manifest version agreement, verifies backend/frontend, packages version-independent artifacts, writes checksums, and publishes the GitHub release.
+- `.github/workflows/version-sync.yml` — lightweight CI guard that checks backend/frontend executable version synchronization.
 
 ## Backend build
 
-- `backend/pom.xml` — Maven project metadata, Java/Spring Boot dependencies/plugins, and backend build/test configuration.
+- `backend/pom.xml` — Maven project metadata, 2.0.12 backend version, Java/Spring Boot dependencies/plugins, and backend build/test configuration.
 
 ## Backend application entry point
 
@@ -133,14 +135,14 @@ This document describes every tracked source/configuration/documentation file in
 ## Frontend root/build files
 
 - `frontend/index.html` — Vite HTML entry document and application mount node.
-- `frontend/package.json` — exact direct dependency/tool versions, Node engine range, and dev/build/lint/typecheck/test/check scripts.
+- `frontend/package.json` — 2.0.12 frontend version, exact direct dependency/tool versions, Node engine range, and dev/build/lint/typecheck/test/check scripts.
 - `frontend/tsconfig.json` — TypeScript project-reference root.
 - `frontend/tsconfig.app.json` — strict browser/React TypeScript compiler settings.
 - `frontend/tsconfig.node.json` — strict Node/Vite configuration compiler settings.
-- `frontend/vite.config.ts` — React/Vite configuration and Vitest environment settings.
+- `frontend/vite.config.ts` — React/Vite/Vitest configuration and build-time injection of the version read from `frontend/package.json`.
 - `frontend/public/logo.svg` — application/logo asset used by sign-in and shell navigation.
 
-`frontend/package-lock.json` is intentionally **not listed as tracked** at this checkpoint because it does not yet exist on `main`; that is a documented release-hardening limitation rather than an omitted file in this reference.
+`frontend/package-lock.json` is intentionally **not listed as tracked** at this checkpoint because it still does not exist on `main`; its absence is an explicit 2.0.12 release blocker, not an omission from this reference.
 
 ## Frontend application core
 
@@ -149,6 +151,7 @@ This document describes every tracked source/configuration/documentation file in
 - `frontend/src/api.ts` — timeout-aware authenticated JSON/CSV HTTP client and safe API-error handling.
 - `frontend/src/api.test.ts` — API base URL/error utility regression coverage.
 - `frontend/src/copy.ts` — centralized recurring application/navigation/contact strings.
+- `frontend/src/env.d.ts` — browser compile-time declaration for the Vite-injected application version constant.
 - `frontend/src/format.ts` — date/time/money formatting helpers.
 - `frontend/src/format.test.ts` — formatting helper tests.
 - `frontend/src/routes.ts` — typed hash-route parsing and navigation URLs.
@@ -177,11 +180,12 @@ This document describes every tracked source/configuration/documentation file in
 - `frontend/src/pages/ReservationsPage.tsx` — member self-service and staff reservation/waitlist creation/cancellation/inspection.
 - `frontend/src/pages/ReportsPage.tsx` — dashboard metrics, overdue/audit views, and CSV import/export controls.
 - `frontend/src/pages/AdminUsersPage.tsx` — administrator staff-account provisioning, role filtering, enable/disable, password reset, and session-count visibility.
-- `frontend/src/pages/SettingsPage.tsx` — theme, account/security, accessibility, privacy, updates, about, contact, and funding information.
+- `frontend/src/pages/SettingsPage.tsx` — theme, account/security, accessibility, privacy, build-derived version/release channel, about, contact, and funding information.
 
-## Operations scripts
+## Operations and release-support scripts
 
 - `scripts/backup.sh` — environment-driven PostgreSQL backup helper with safe shell behavior.
+- `scripts/check-version.mjs` — dependency-free cross-manifest version guard; optionally validates an expected tag/version such as `v2.0.12`.
 - `scripts/restore.sh` — explicit PostgreSQL restore helper intended for controlled recovery/drill use.
 
 ## Documentation
@@ -194,7 +198,8 @@ This document describes every tracked source/configuration/documentation file in
 - `docs/deployment.md` — production topology, secrets/TLS/CORS/DB/migration/proxy/health/scale boundaries.
 - `docs/development.md` — backend/frontend/database/config/error/logging/commit development workflow.
 - `docs/performance.md` — budgets, measurement method, database/frontend/load/regression guidance.
-- `docs/release.md` — honest pre-release verification, version/tag/artifact/migration/rollback/release-note process.
+- `docs/release.md` — 2.0.12-aware reproducible pre-release verification, version/tag/artifact/migration/rollback/release-note process.
+- `docs/releases/2.0.12.md` — dedicated 2.0.12 release-candidate scope, hardening changes, and exact pre-tag checklist.
 - `docs/setup.md` — clean checkout prerequisites, database/backend/frontend startup, full verification, reset notes.
 - `docs/testing.md` — test layers, quality gates, determinism, regression, accessibility/security checks, known limitations.
 - `docs/troubleshooting.md` — database, migration, auth, CORS, npm, TypeScript, circulation, staff-admin, CSV, notification, and recovery diagnosis.
@@ -205,4 +210,4 @@ This document describes every tracked source/configuration/documentation file in
 
 ## Maintenance rule
 
-When adding, renaming, or deleting a tracked file, update this reference in the same documentation pass when the file changes repository structure, public behavior, operations, security, or continuity. Generated build output, IDE state, `node_modules`, local `.env`, secrets, database volumes, and other intentionally ignored files do not belong here.
+When adding, renaming, or deleting a tracked file, update this reference in the same documentation pass when the file changes repository structure, public behavior, operations, security, release behavior, or continuity. Generated build output, IDE state, `node_modules`, local `.env`, secrets, database volumes, and other intentionally ignored files do not belong here.
