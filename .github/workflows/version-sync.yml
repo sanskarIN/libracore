@@ -1,0 +1,36 @@
+name: Version Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/pom.xml'
+      - 'frontend/package.json'
+      - 'scripts/check-version.mjs'
+      - '.github/workflows/version-sync.yml'
+  pull_request:
+    paths:
+      - 'backend/pom.xml'
+      - 'frontend/package.json'
+      - 'scripts/check-version.mjs'
+      - '.github/workflows/version-sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Verify manifest versions match
+        run: node scripts/check-version.mjs
