@@ -56,9 +56,15 @@ jobs:
         run: mvn -B --no-transfer-progress clean verify
 
       - name: Start packaged application
-        working-directory: backend
+        shell: bash
         run: |
-          java -jar target/libracore-backend-0.1.0-SNAPSHOT.jar > /tmp/libracore-backend.log 2>&1 &
+          set -euo pipefail
+          backend_jar="$(find backend/target -maxdepth 1 -type f -name 'libracore-backend-*.jar' ! -name '*.original' | head -n 1)"
+          if [[ -z "$backend_jar" ]]; then
+            echo "No packaged LibraCore backend JAR was found." >&2
+            exit 1
+          fi
+          java -jar "$backend_jar" > /tmp/libracore-backend.log 2>&1 &
           echo $! > /tmp/libracore-backend.pid
 
       - name: Verify migrations and health endpoint
