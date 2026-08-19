@@ -3,7 +3,8 @@
 **Audit date:** 2026-08-19  
 **Repository:** `sanskarIN/libracore`  
 **Branch:** `main`  
-**Source checkpoint before this handoff:** `230222faa93742197250372b833dfa529ff513ce`  
+**Final source checkpoint immediately before this handoff refresh:** `d2178ee9165d98ba4180a96efd8e395dfcd2ec5b`  
+**Audited recursive tree:** `35a7f8cadba7e9bceeeecc07dd10248797bc86de` (`truncated: false`)  
 **Commit identity used for this final pass:** `Sanskar <sanskarin@outlook.in>`
 
 This file is the canonical continuation record for the final LibraCore audit. It distinguishes implemented work from verification that still requires an observable build/CI environment. Do not mark a stable release complete by inference from source presence alone.
@@ -149,7 +150,7 @@ Added or completed:
 - `docs/adr/0003-opaque-bearer-sessions.md`
 - `docs/repository-reference.md`
 
-`docs/repository-reference.md` is the exhaustive tracked-file purpose map for the final-audit checkpoint. Keep it synchronized whenever repository structure/public behavior/operations/security change.
+`docs/repository-reference.md` is synchronized to the complete recursive tree at the final pre-handoff checkpoint, including the dependency-review workflow and this `what_changed.md` continuity file. Keep it synchronized whenever repository structure/public behavior/operations/security change.
 
 ### README
 
@@ -184,7 +185,8 @@ Verified at source level:
 - migrations V1 through V6 are present;
 - backend unit tests exist for ISBN, fine-policy calculation, text normalization, and CSV codec;
 - frontend tests exist for API utility, formatting, session, and theme behavior;
-- source search returned no indexed `TODO` or `FIXME` markers at the end of the pass.
+- source search returned no indexed `TODO` or `FIXME` markers at the end of the pass;
+- the final recursive Git tree response reported `truncated: false`, so the tracked-file inventory used for `docs/repository-reference.md` was complete at that checkpoint.
 
 A search-index result is not proof that no hidden defect exists; it is only one audit signal.
 
@@ -193,11 +195,12 @@ A search-index result is not proof that no hidden defect exists; it is only one 
 ### What was actually verified
 
 - Live GitHub repository/file tree and current file contents were inspected through the connected GitHub API.
+- A non-truncated recursive Git tree was inspected and reconciled with `docs/repository-reference.md`.
 - Backend and frontend HTTP contracts relevant to the completed pages were cross-checked directly against controller/model/service/client code.
 - Strict TypeScript optional-property behavior was reproduced locally with a minimal compiler test before the login-prop fix.
 - Current `main` branch metadata was checked.
 - Current frontend lockfile presence was checked.
-- Current combined commit status was checked.
+- Current combined commit status was checked on the final pre-handoff source checkpoint and remained empty through the available status interface.
 
 ### What was not proven in this execution environment
 
@@ -214,7 +217,7 @@ npm install
 npm run check
 ```
 
-Likewise, no successful GitHub Actions status was observable for the current final source head through the available status interface. The combined status list was empty at the evidence checkpoint.
+Likewise, no successful GitHub Actions status was observable for the final pre-handoff source head through the available status interface. The combined status list was empty at the evidence checkpoint.
 
 Therefore the following claims are intentionally **not** made:
 
@@ -249,7 +252,7 @@ After the lockfile is committed and synchronized, clean CI/setup should use `npm
 
 ### 2. CI success is not yet observed
 
-Workflows exist, but the current final-head combined status did not expose completed checks through the available connector. Do not infer success from workflow YAML presence.
+Workflows exist, but the final pre-handoff combined status did not expose completed checks through the available connector. Do not infer success from workflow YAML presence.
 
 Required closure:
 
@@ -320,7 +323,7 @@ This audit intentionally used many focused commits. Important groups include:
 
 ### Frontend/product
 
-- `5270f104` — `fix: allow explicit undefined login error state`
+- `0a39d951` — `fix: allow explicit undefined login error state`
 - `d393e612` — `feat: add administrator staff account management`
 - `2827fc73` — staff-account navigation copy
 - `e67ab16e` — administrator staff-account route
@@ -334,7 +337,7 @@ This audit intentionally used many focused commits. Important groups include:
 
 - `6a0fa283` — frontend CI/lockfile bootstrap
 - `01f78d29` — aggregate frontend quality command
-- exact frontend dependency pinning commit in this final line
+- direct frontend dependency/tool versions were exact-pinned during this final line
 - `c8d006d7` — CodeQL analysis
 - `56028f34` — pull-request dependency review
 - `9a480f24` — Dependabot configuration
@@ -344,7 +347,9 @@ This audit intentionally used many focused commits. Important groups include:
 
 - security/privacy/threat-model, contribution/conduct/support, setup/architecture/testing/API/operations/accessibility/performance/release/troubleshooting, ADR, branch-protection, issue/PR/funding, changelog/roadmap commits are intentionally separated for reviewability.
 - `a1f18a53` — exhaustive tracked-file reference.
-- `230222fa` — final-audit changelog synchronization before this handoff.
+- `230222fa` — final-audit changelog synchronization.
+- `e59f4333` — initial final engineering handoff.
+- `d2178ee9` — repository-reference synchronization after dependency-review was added.
 
 Use `git log --oneline` for the full exact sequence rather than treating this selected list as exhaustive.
 
