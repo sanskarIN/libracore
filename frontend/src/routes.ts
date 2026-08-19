@@ -7,6 +7,7 @@ export type Route =
   | 'circulation'
   | 'reservations'
   | 'reports'
+  | 'staff-accounts'
   | 'settings'
 
 const ROUTES = new Set<Route>([
@@ -16,6 +17,7 @@ const ROUTES = new Set<Route>([
   'circulation',
   'reservations',
   'reports',
+  'staff-accounts',
   'settings',
 ])
 
