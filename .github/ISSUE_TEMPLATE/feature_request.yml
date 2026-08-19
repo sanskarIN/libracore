@@ -1,0 +1,42 @@
+name: Feature request
+description: Propose a coherent improvement to LibraCore
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What user/operator need is not currently met?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the outcome, not only an implementation preference.
+    validations:
+      required: true
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Primary audience
+      options: [Administrator, Librarian, Member, Maintainer, Operator]
+    validations:
+      required: true
+  - type: textarea
+    id: considerations
+    attributes:
+      label: Security, privacy, migration, accessibility, or performance considerations
+      description: Note any important tradeoffs or say "None known".
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues/roadmap for this capability.
+          required: true
+        - label: This request is coherent with a library-management product.
+          required: true
