@@ -12,15 +12,13 @@ LibraCore does not call a release ready merely because source files exist. A rel
    cd backend
    mvn clean verify
    ```
-5. Verify frontend:
+5. Verify frontend. If `frontend/package-lock.json` is not present on the intended commit:
    ```bash
    cd frontend
-   npm ci
-   npm run lint
-   npm run typecheck
-   npm run test:run
-   npm run build
+   npm install
+   npm run check
    ```
+   Once a synchronized lockfile is committed, use `npm ci` instead of `npm install`.
 6. Start PostgreSQL from an empty disposable volume and start the packaged backend; confirm Flyway and `/actuator/health`.
 7. Perform the primary-role smoke journeys documented in `docs/testing.md`.
 8. Perform the manual accessibility checks in `docs/accessibility.md`.
@@ -28,6 +26,7 @@ LibraCore does not call a release ready merely because source files exist. A rel
 10. Perform or review a current backup/restore drill.
 11. Check documentation links/configuration against the actual tree.
 12. Confirm version numbers and release notes are consistent.
+13. Do not cut a stable release while required verification remains unobserved or a release-blocking limitation remains open in `what_changed.md`.
 
 ## Versioning
 
