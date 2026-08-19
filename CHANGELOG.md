@@ -1,8 +1,17 @@
 # Changelog
 
-All notable LibraCore changes are recorded here. The project follows Keep a Changelog conventions and intends to use Semantic Versioning for stable releases.
+All notable LibraCore changes are recorded here. The project follows Keep a Changelog conventions and uses Semantic Versioning for release identifiers.
 
 ## [Unreleased]
+
+### Release gates
+
+- Commit and review `frontend/package-lock.json` before tagging a release.
+- Observe successful backend/frontend/version/security CI on the final release-candidate commit.
+- Complete clean PostgreSQL migration/startup, backup/restore, role smoke, and accessibility evidence.
+- Enable `main` branch protection after stable required-check names are confirmed.
+
+## [2.0.12] - 2026-08-19 — release candidate
 
 ### Added
 
@@ -19,9 +28,20 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 - Backup and restore scripts.
 - Light/dark/system appearance support and responsive accessibility-oriented design system.
 - Frontend utility/unit tests and backend domain/parser tests.
-- Backend/frontend GitHub Actions quality gates, CodeQL, pull-request dependency review, Dependabot, and tagged release automation.
+- Backend/frontend GitHub Actions quality gates, CodeQL, pull-request dependency review, Dependabot, tagged release automation, and version synchronization automation.
+- Explicit Frontend Lockfile Bootstrap workflow for maintainers.
+- Cross-manifest `scripts/check-version.mjs` guard for frontend/backend/tag version consistency.
 - Security, privacy, threat-model, support, contribution, operations, architecture, testing, release, branch-protection, and exhaustive repository-reference documentation.
 - Structured issue forms, pull-request checklist, funding metadata, and repository governance guidance.
+
+### Changed
+
+- Backend Maven and frontend npm package versions are now `2.0.12`.
+- The Settings page derives its displayed web version from build-time package metadata rather than a hard-coded value.
+- Frontend CI is read-only and requires a committed lockfile for reproducible `npm ci` verification.
+- Release automation validates tag/manifest consistency before packaging.
+- Release and backend CI discover the packaged backend JAR without embedding a historical version in workflow source.
+- README, release process, and roadmap now describe the 2.0.12 release-candidate line and its remaining gates.
 
 ### Fixed
 
@@ -29,13 +49,17 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 - Fixed a strict TypeScript `exactOptionalPropertyTypes` incompatibility in login error props.
 - Preserved the staff-account creation form element safely across asynchronous submission before resetting it.
 - Kept every role-authorized navigation destination reachable on mobile instead of truncating the bottom navigation to five routes.
-- Corrected setup/testing/release documentation so clean clones use `npm install` until a synchronized frontend lockfile is committed; documentation no longer instructs an impossible `npm ci` path.
+- Corrected setup/testing/release documentation so clean clones do not instruct `npm ci` before a lockfile exists.
 - Exact-pinned direct frontend dependency/tool versions and added one aggregate frontend quality command.
+- Fixed backend CI/release packaging paths that still referenced `libracore-backend-0.1.0-SNAPSHOT.jar` after the 2.0.12 version change.
 
 ### Security
 
 - Password hashing, session expiry/revocation, bounded validation, parameterized data access, server-side authorization, CORS configuration, audit logging, and secret-safe configuration.
 - Documented trust boundaries, residual risks, private vulnerability reporting, privacy responsibilities, production boundaries, and branch-protection expectations.
+- Release verification now refuses to publish without the committed frontend dependency lockfile.
+
+> `2.0.12` is prepared in source but must not be treated as a published stable release until the explicit gates in `what_changed.md` and `ROADMAP.md` are closed and `v2.0.12` is tagged.
 
 ## [0.1.0] - 2026-08-19
 
