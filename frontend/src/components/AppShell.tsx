@@ -86,7 +86,7 @@ export function AppShell({ user, route, children, onSignOut }: AppShellProps) {
       </div>
 
       <nav className="mobile-nav" aria-label="Mobile primary navigation">
-        {items.slice(0, 5).map((item) => (
+        {items.map((item) => (
           <a
             key={item.route}
             href={routeHref(item.route)}
