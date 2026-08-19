@@ -7,16 +7,21 @@ import com.sanskar.libracore.common.ApiException;
 import com.sanskar.libracore.exchange.DataExchangeModels.ImportResult;
 import com.sanskar.libracore.member.MemberModels.CreateMemberRequest;
 import com.sanskar.libracore.member.MemberService;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -27,17 +32,20 @@ public class DataExchangeService {
     private final CatalogService catalogService;
     private final MemberService memberService;
     private final AuditService auditService;
+    private final Validator validator;
 
     public DataExchangeService(
             JdbcClient jdbc,
             CatalogService catalogService,
             MemberService memberService,
-            AuditService auditService
+            AuditService auditService,
+            Validator validator
     ) {
         this.jdbc = jdbc;
         this.catalogService = catalogService;
         this.memberService = memberService;
         this.auditService = auditService;
+        this.validator = validator;
     }
 
     public String exportBooks() {
@@ -154,9 +162,6 @@ public class DataExchangeService {
                 continue;
             }
             String title = value(row, headers, "title");
-            if (title.isBlank()) {
-                throw rowError(index + 1, "title is required");
-            }
             Integer publicationYear = parseIntegerNullable(value(row, headers, "publicationyear"), index + 1, "publicationYear");
             String languageCode = value(row, headers, "languagecode");
             if (languageCode.isBlank()) {
@@ -175,6 +180,7 @@ public class DataExchangeService {
                     splitPipe(value(row, headers, "authors")),
                     splitPipe(value(row, headers, "categories"))
             );
+            validateRequest(request, index + 1);
             try {
                 catalogService.createBook(request, actorUserId);
             } catch (ApiException exception) {
@@ -199,6 +205,7 @@ public class DataExchangeService {
         int imported = 0;
         List<String> warnings = new ArrayList<>();
         for (int index = 1; index < rows.size(); index++) {
+            int csvRow = index + 1;
             List<String> row = rows.get(index);
             if (row.stream().allMatch(String::isBlank)) {
                 continue;
@@ -208,9 +215,9 @@ public class DataExchangeService {
                     .param("code", branchCode)
                     .query(UUID.class)
                     .optional()
-                    .orElseThrow(() -> rowError(index + 1, "homeBranchCode does not match an active branch"));
+                    .orElseThrow(() -> rowError(csvRow, "homeBranchCode does not match an active branch"));
 
-            OffsetDateTime expiresAt = parseDateTimeNullable(value(row, headers, "expiresat"), index + 1, "expiresAt");
+            OffsetDateTime expiresAt = parseDateTimeNullable(value(row, headers, "expiresat"), csvRow, "expiresAt");
             CreateMemberRequest request = new CreateMemberRequest(
                     branchId,
                     value(row, headers, "librarycardnumber"),
@@ -222,23 +229,37 @@ public class DataExchangeService {
                     blankToNull(value(row, headers, "notes")),
                     null
             );
+            validateRequest(request, csvRow);
             try {
                 memberService.createMember(request, actorUserId);
             } catch (ApiException exception) {
-                throw rowError(index + 1, exception.getMessage());
+                throw rowError(csvRow, exception.getMessage());
             }
             String requestedStatus = value(row, headers, "status").trim().toUpperCase(Locale.ROOT);
             if (!requestedStatus.isBlank() && !"ACTIVE".equals(requestedStatus)) {
                 if (!List.of("SUSPENDED", "CLOSED").contains(requestedStatus)) {
-                    throw rowError(index + 1, "status must be ACTIVE, SUSPENDED, or CLOSED");
+                    throw rowError(csvRow, "status must be ACTIVE, SUSPENDED, or CLOSED");
                 }
-                warnings.add("Row " + (index + 1) + ": imported as ACTIVE; change status through the member lifecycle API after review.");
+                warnings.add("Row " + csvRow + ": imported as ACTIVE; change status through the member lifecycle API after review.");
             }
             imported++;
         }
         auditService.success(actorUserId, "CSV_IMPORT_MEMBERS", "MEMBER", null, null,
                 "{\"rows\":" + imported + "}");
         return new ImportResult("members", imported, List.copyOf(warnings));
+    }
+
+    private <T> void validateRequest(T request, int row) {
+        Set<ConstraintViolation<T>> violations = validator.validate(request);
+        if (violations.isEmpty()) {
+            return;
+        }
+        String details = violations.stream()
+                .sorted(Comparator.comparing(violation -> violation.getPropertyPath().toString()))
+                .map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
+                .findFirst()
+                .orElse("contains invalid values");
+        throw rowError(row, details);
     }
 
     private static Map<String, Integer> headers(List<String> headerRow) {
@@ -279,7 +300,7 @@ public class DataExchangeService {
         if (value == null || value.isBlank()) {
             return List.of();
         }
-        return List.of(value.split("\\|", -1)).stream()
+        return Arrays.stream(value.split("\\|", -1))
                 .map(String::trim)
                 .filter(part -> !part.isBlank())
                 .toList();
