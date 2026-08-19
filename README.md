@@ -2,7 +2,7 @@
 
 **Production-minded, open-source library management for cataloging, circulation, members, branches, policy, reporting, and auditability.**
 
-> Current development line: **0.1.x — foundation + end-to-end MVP**
+> Current release candidate: **2.0.12**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-sanskarIN-FFDD00?logo=buy-me-a-coffee&logoColor=000000)](https://buymeacoffee.com/sanskarIN)
@@ -17,7 +17,7 @@ The project intentionally favors explicit business rules, database migrations, d
 
 ## Status
 
-The repository is being built incrementally. `what_changed.md` is the canonical continuation/handoff document and records completed work, verification evidence, limitations, recent commits, and the next exact tasks. Do not interpret an unfinished roadmap item as already implemented.
+The executable backend and frontend manifests are aligned to **2.0.12**. `what_changed.md` is the canonical continuation/handoff document and records completed work, verification evidence, limitations, recent commits, and the next exact tasks. A version value in source does not by itself mean that the corresponding GitHub release has passed every release gate.
 
 ## Feature map
 
@@ -57,7 +57,7 @@ The repository is being built incrementally. `what_changed.md` is the canonical 
 - Keyboard and screen-reader-oriented UI conventions
 - Loading, empty, success, warning, and error states
 - Security, privacy, accessibility, performance, testing, release, and troubleshooting documentation
-- Backend/frontend CI, CodeQL, Dependabot, release automation, issue/PR templates, and funding metadata
+- Backend/frontend CI, version synchronization, CodeQL, dependency review, Dependabot, release automation, issue/PR templates, and funding metadata
 
 ## Screenshots
 
@@ -73,7 +73,7 @@ Real screenshots will be added after the UI reaches a stable release-candidate s
 | API | JSON REST under `/api` |
 | Local services | Docker Compose |
 | CI | GitHub Actions |
-| Security automation | CodeQL, Dependabot, secret-safe configuration |
+| Security automation | CodeQL, Dependabot, dependency review, secret-safe configuration |
 
 Spring Boot 4.1 supports Java 25. The frontend package declares the supported Node.js range; Node.js 24 is used by frontend/release CI.
 
@@ -81,11 +81,11 @@ Spring Boot 4.1 supports Java 25. The frontend package declares the supported No
 
 ```text
 .
-├── .github/                 # CI, security automation, templates, funding
+├── .github/                 # CI, release/security automation, templates, funding
 ├── backend/                 # Spring Boot application and database migrations
 ├── frontend/                # React + TypeScript application
 ├── docs/                    # Architecture, setup, operations, ADRs, file reference
-├── scripts/                 # Backup/restore operational helpers
+├── scripts/                 # Backup/restore helpers and version guard
 ├── .env.example             # Placeholder-only local configuration contract
 ├── compose.yml              # Local PostgreSQL
 ├── CHANGELOG.md
@@ -148,7 +148,7 @@ npm run dev
 
 Default development UI: `http://localhost:5173`.
 
-> A committed frontend transitive lockfile is still tracked as a release-hardening task. Until `frontend/package-lock.json` exists on the checked-out commit, use `npm install`; `npm ci` requires that lockfile.
+> A committed frontend transitive lockfile is still a release gate. Until `frontend/package-lock.json` exists on the checked-out commit, local development can use `npm install`; reproducible CI/release verification requires the committed lockfile and `npm ci`. Maintainers can use the **Frontend Lockfile Bootstrap** GitHub Actions workflow or generate the lock locally.
 
 ## Configuration
 
@@ -168,6 +168,16 @@ The bootstrap administrator is optional and intended only for explicitly configu
 
 ## Development commands
 
+### Version synchronization
+
+From the repository root:
+
+```bash
+node scripts/check-version.mjs 2.0.12
+```
+
+This fails if `frontend/package.json`, `backend/pom.xml`, and an optional expected release version disagree.
+
 ### Backend
 
 ```bash
@@ -178,9 +188,19 @@ mvn spring-boot:run
 
 ### Frontend
 
+Before the lockfile is committed:
+
 ```bash
 cd frontend
 npm install
+npm run check
+```
+
+After the lockfile is committed, clean verification should use:
+
+```bash
+cd frontend
+npm ci
 npm run check
 ```
 
@@ -250,7 +270,9 @@ The intended release gate includes:
 
 - backend compile + unit/integration tests
 - Flyway migration verification from a clean database
+- frontend lockfile presence + `npm ci`
 - frontend lint + strict type checks + tests + production build
+- manifest/tag version synchronization
 - accessibility checks
 - dependency/security analysis
 - documentation/link review
@@ -276,7 +298,9 @@ Read [`docs/deployment.md`](docs/deployment.md) and [`docs/troubleshooting.md`](
 
 ## Releases
 
-Versioning follows Semantic Versioning once stable public releases begin. Release procedure, migration checks, rollback expectations, artifact verification, and release-note requirements are in [`docs/release.md`](docs/release.md).
+LibraCore source manifests are currently prepared for **2.0.12**. A release tag must match the backend/frontend manifest version; release automation validates this before packaging. The release workflow also refuses to publish without a committed frontend lockfile and packages the backend JAR without a hard-coded historical filename.
+
+Release procedure, migration checks, rollback expectations, artifact verification, and release-note requirements are in [`docs/release.md`](docs/release.md).
 
 ## Contributing
 
