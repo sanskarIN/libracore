@@ -38,24 +38,35 @@ Then check `http://localhost:8080/actuator/health`. A port conflict, database fa
 
 Verify the backend origin/API base and CORS configuration. The frontend default is `http://localhost:8080/api`; `VITE_API_BASE_URL` is compiled into the frontend build. Ensure the browser origin is included in `APP_CORS_ALLOWED_ORIGINS`.
 
-## `npm ci` fails
+## Frontend dependency installation fails
 
-Confirm `frontend/package-lock.json` exists and Node/npm versions satisfy `frontend/package.json`. If `package.json` changed without regenerating the lockfile, update the lock in a controlled dependency-maintenance change and commit both together.
+Check Node/npm versions against `frontend/package.json`.
+
+- If the checked-out commit has **no** `frontend/package-lock.json`, run `npm install`. `npm ci` cannot operate without a compatible lockfile.
+- If a lockfile exists, prefer `npm ci` for a clean verification install. If `package.json` and the lockfile disagree, regenerate the lock in a controlled dependency-maintenance change and commit them together.
+
+Do not work around dependency failures by committing `node_modules`.
 
 ## TypeScript/lint/build errors
 
-Run each stage separately to isolate the failure:
+Run the aggregate gate first:
 
 ```bash
 cd frontend
-npm ci
+npm install
+npm run check
+```
+
+If it fails, run stages separately to isolate the first deterministic problem:
+
+```bash
 npm run lint
 npm run typecheck
 npm run test:run
 npm run build
 ```
 
-Fix the first deterministic error before suppressing diagnostics. Strict TypeScript options are intentional.
+When the repository has a synchronized lockfile, use `npm ci` instead of `npm install`. Fix the first deterministic error before suppressing diagnostics. Strict TypeScript options are intentional.
 
 ## Copy lookup fails
 
@@ -64,6 +75,10 @@ The circulation desk accepts the supported accession/barcode/QR lookup contract.
 ## Issue/renew/return is rejected
 
 Check member status/expiry, copy state, active circulation policy, renewal count, reservations/holds, and current loan state. Server-side business rules are authoritative even if the UI previously displayed an action.
+
+## Staff account action is rejected
+
+Only administrators can use `/api/admin/users` operations. Confirm the acting account is an enabled administrator. The current UI intentionally does not allow disabling the account being used, while the server remains the final authorization/invariant boundary.
 
 ## CSV import fails
 
