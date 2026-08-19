@@ -1,0 +1,3 @@
+ALTER TABLE notification_outbox
+    ADD COLUMN subject VARCHAR(300) NOT NULL DEFAULT '',
+    ADD COLUMN body TEXT NOT NULL DEFAULT '';
