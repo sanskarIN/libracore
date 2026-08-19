@@ -5,7 +5,7 @@
 - Git
 - Java 25 JDK
 - Maven 3.6.3 or newer
-- Node.js matching `frontend/package.json` engines (Node 24 is a recommended current choice)
+- Node.js matching `frontend/package.json` engines (Node 24 is the CI/release choice)
 - npm
 - Docker with Compose, or PostgreSQL 18-compatible service credentials
 
@@ -25,6 +25,12 @@ docker compose version
 ```bash
 git clone https://github.com/sanskarIN/libracore.git
 cd libracore
+```
+
+The current executable source version is **2.0.12**. Confirm backend/frontend manifest synchronization:
+
+```bash
+node scripts/check-version.mjs 2.0.12
 ```
 
 Copy `.env.example` to `.env` for your local values. Never commit `.env`.
@@ -56,7 +62,7 @@ http://localhost:8080/actuator/health
 
 If bootstrap administration is required for a disposable/local environment, configure `APP_BOOTSTRAP_ADMIN_EMAIL` and `APP_BOOTSTRAP_ADMIN_PASSWORD` explicitly. Do not use a source-controlled/default production password.
 
-## Frontend
+## Frontend development before the lockfile is committed
 
 In another terminal:
 
@@ -70,9 +76,26 @@ Open `http://localhost:5173`.
 
 The default frontend API base is `http://localhost:8080/api`; override with `VITE_API_BASE_URL` when needed.
 
-`frontend/package.json` currently pins direct dependency/tool versions exactly, but the repository does not yet contain `frontend/package-lock.json`. Use `npm install` on commits without that lockfile. Once a lockfile is committed and kept synchronized, clean verification should use `npm ci`.
+`frontend/package.json` pins direct dependency/tool versions exactly, but `frontend/package-lock.json` is still a 2.0.12 release gate. `npm install` is acceptable for local development on commits without the lockfile; it is not the final reproducible release path.
 
-## Full verification
+## Generate the release lockfile
+
+Maintainers can run the **Frontend Lockfile Bootstrap** GitHub Actions workflow, or generate it locally with the supported Node/npm toolchain:
+
+```bash
+cd frontend
+npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+npm ci --ignore-scripts --no-audit --no-fund
+npm run check
+```
+
+Review `package-lock.json` before committing it. After it is committed, clean frontend setup and CI should use `npm ci` instead of regenerating dependency resolution.
+
+## Full verification after lockfile closure
+
+```bash
+node scripts/check-version.mjs 2.0.12
+```
 
 ```bash
 cd backend
@@ -81,7 +104,7 @@ mvn clean verify
 
 ```bash
 cd frontend
-npm install
+npm ci --ignore-scripts
 npm run check
 ```
 
@@ -100,4 +123,4 @@ docker compose -f compose.yml up -d postgres
 
 Commands are shell-neutral where practical. On Windows PowerShell, environment-variable assignment syntax differs from POSIX shells. Docker Desktop can provide Compose/PostgreSQL, while Java/Maven/Node/npm can be installed with standard vendor/package-manager methods.
 
-For common failures see [`troubleshooting.md`](troubleshooting.md).
+For common failures see [`troubleshooting.md`](troubleshooting.md). For the exact 2.0.12 pre-tag gate see [`releases/2.0.12.md`](releases/2.0.12.md).
