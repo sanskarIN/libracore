@@ -3,7 +3,7 @@ import { copy } from '../copy'
 
 interface LoginPageProps {
   onLogin: (email: string, password: string) => Promise<void>
-  error?: string
+  error?: string | undefined
 }
 
 export function LoginPage({ onLogin, error }: LoginPageProps) {
@@ -81,7 +81,8 @@ export function LoginPage({ onLogin, error }: LoginPageProps) {
           </button>
         </form>
         <p className="auth-help">
-          Trouble signing in? Contact <a href={`mailto:${copy.contacts.support}`}>{copy.contacts.support}</a>.
+          If you cannot sign in, contact your library administrator or email{' '}
+          <a href={`mailto:${copy.contacts.support}`}>{copy.contacts.support}</a>.
         </p>
       </section>
     </main>
