@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ApiClient, readableError } from './api'
 import { AppShell } from './components/AppShell'
+import { AdminUsersPage } from './pages/AdminUsersPage'
 import { CatalogPage } from './pages/CatalogPage'
 import { CirculationPage } from './pages/CirculationPage'
 import { DashboardPage } from './pages/DashboardPage'
@@ -76,12 +77,14 @@ export default function App() {
       {safeRoute === 'circulation' ? <CirculationPage api={api} user={session.user} /> : null}
       {safeRoute === 'reservations' ? <ReservationsPage api={api} user={session.user} /> : null}
       {safeRoute === 'reports' ? <ReportsPage api={api} user={session.user} /> : null}
+      {safeRoute === 'staff-accounts' ? <AdminUsersPage api={api} user={session.user} /> : null}
       {safeRoute === 'settings' ? <SettingsPage user={session.user} theme={theme} onThemeChange={changeTheme} /> : null}
     </AppShell>
   )
 }
 
 function authorizedRoute(route: Route, role: StoredSession['user']['role']): Route {
+  if (route === 'staff-accounts' && role !== 'ADMIN') return 'dashboard'
   if (role === 'MEMBER' && (route === 'members' || route === 'circulation' || route === 'reports')) {
     return 'dashboard'
   }
