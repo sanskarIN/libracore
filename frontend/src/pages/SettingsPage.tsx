@@ -59,7 +59,7 @@ export function SettingsPage({ user, theme, onThemeChange }: SettingsPageProps) 
 
         <article className="panel">
           <div className="panel-heading"><div><p className="eyebrow">Updates</p><h2>Version and release channel</h2></div></div>
-          <dl className="detail-list"><div><dt>Web version</dt><dd>0.1.0</dd></div><div><dt>Channel</dt><dd>Development / foundation</dd></div></dl>
+          <dl className="detail-list"><div><dt>Web version</dt><dd>{__APP_VERSION__}</dd></div><div><dt>Channel</dt><dd>2.0.x release candidate</dd></div></dl>
           <p>Production operators should deploy tagged releases after reviewing migrations, release notes, and backup/rollback guidance.</p>
           <a className="text-link" href="https://github.com/sanskarIN/libracore/releases" target="_blank" rel="noreferrer">Open GitHub releases</a>
         </article>
