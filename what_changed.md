@@ -1,384 +1,373 @@
-# LibraCore — Final Engineering Handoff
+# LibraCore — 2.0.12 Final Engineering Handoff
 
-**Audit date:** 2026-08-19  
+**Audit/update date:** 2026-08-19  
 **Repository:** `sanskarIN/libracore`  
 **Branch:** `main`  
-**Final source checkpoint immediately before this handoff refresh:** `d2178ee9165d98ba4180a96efd8e395dfcd2ec5b`  
-**Audited recursive tree:** `35a7f8cadba7e9bceeeecc07dd10248797bc86de` (`truncated: false`)  
-**Commit identity used for this final pass:** `Sanskar <sanskarin@outlook.in>`
+**2.0.12 documentation/source checkpoint before this handoff commit:** `7b66a79b28579496a6580ae304da7b62a86bd42f`  
+**Commit identity:** `Sanskar <sanskarin@outlook.in>`
 
-This file is the canonical continuation record for the final LibraCore audit. It distinguishes implemented work from verification that still requires an observable build/CI environment. Do not mark a stable release complete by inference from source presence alone.
+This file is the canonical continuation record for LibraCore. Read it before adding more features. It distinguishes completed source work from verification that still requires a runnable dependency/CI/host environment.
 
-## Final status
+## Version 2.0.12 status
 
-The repository now contains a coherent end-to-end 0.1.x library-management implementation with:
+LibraCore source is now explicitly prepared as **version 2.0.12**:
+
+- `backend/pom.xml` project version: `2.0.12`;
+- `frontend/package.json` version: `2.0.12`;
+- Settings displays the frontend build version injected from `frontend/package.json` rather than a duplicated hard-coded string;
+- `scripts/check-version.mjs` fails if backend/frontend versions disagree and can also validate an expected tag such as `v2.0.12`;
+- `.github/workflows/version-sync.yml` runs that synchronization check on relevant repository changes;
+- `.github/workflows/release.yml` validates the release tag against both executable manifests.
+
+**Do not tag/publish `v2.0.12` yet.** The source version is prepared, but release evidence is not complete because the frontend lockfile is still absent, final CI success is not observable through the available status interface, and `main` branch protection remains disabled.
+
+## Product implementation currently present
+
+The repository contains the end-to-end LibraCore library-management implementation across:
 
 - Spring Boot modular-monolith backend;
-- PostgreSQL schema and six versioned Flyway migrations;
-- catalog, branch, shelf, physical-copy, member, account, circulation, reservation/waitlist, fine, reporting, audit, data-exchange, notification, and security modules;
-- administrator/librarian/member authorization boundaries;
-- opaque revocable bearer sessions and maintained password hashing;
-- React/TypeScript frontend for authentication, dashboards, catalog, members, circulation, reservations, reports, administrator staff accounts, and settings;
-- responsive light/dark/system UI with keyboard/focus/accessibility-oriented conventions;
-- database backup/restore helpers;
-- backend/frontend CI definitions, CodeQL, dependency review, Dependabot, release automation, issue/PR templates, and funding metadata;
-- MIT license, security/privacy/support/contribution/community policies;
-- architecture, API, setup, development, testing, deployment, backup/restore, performance, accessibility, release, troubleshooting, branch-protection, ADR, changelog, roadmap, and exhaustive tracked-file documentation.
+- PostgreSQL persistence and Flyway migrations V1–V6;
+- books, authors, publishers, categories, branches, shelves, physical copies, accession/barcode/QR lookup, and search;
+- members, account linking, administrator/librarian/member roles, authentication, and authorization;
+- issue, return, renewal, reservations/waitlists, circulation policy, fine assessment and settlement;
+- dashboard, overdue reporting, audit search, CSV import/export, notification scheduling/gateways;
+- administrator staff-account creation, role filtering, enable/disable, password reset, session revocation, and active-session visibility;
+- responsive React/TypeScript frontend with light/dark/system themes and role-aware navigation;
+- mobile navigation that keeps every authorized route reachable;
+- backup/restore helpers;
+- security/privacy/threat-model/contribution/support documentation;
+- CodeQL, dependency review, Dependabot, backend/frontend CI, release automation, version sync, issue/PR templates, and funding metadata.
 
-The implementation is materially more complete after this pass, but **a stable release must not be tagged yet** because final clean-checkout CI/build evidence is not currently observable and the frontend transitive lockfile is still missing.
+## 2.0.12 work completed in this continuation
 
-## Important bugs and feature gaps fixed in this pass
+### Executable version alignment
 
-### Frontend application completeness
+Changed both build manifests from the old 0.1.x identifiers to `2.0.12`.
 
-- Restored/completed the React application entry path and main application composition discovered during the final audit.
-- Completed formerly missing feature-page routes for circulation, reservations, reports, and settings against the existing backend contracts.
-- Added reusable loading/empty/status presentation and the responsive application shell/design-system wiring used by the new pages.
-- Added/retained frontend utility tests for API, formatting, session, and theme behavior.
+Important commits:
 
-### Administrator staff-account management
+- `2b1ce0fd` — `release: set backend version 2.0.12`
+- `774bc10f` — `release: set frontend version 2.0.12`
 
-The backend already exposed administrator-only staff account endpoints, but the frontend had no way to use them. The final pass added `frontend/src/pages/AdminUsersPage.tsx` and routed it as `staff-accounts` for administrators.
+### Build-derived frontend version
 
-Delivered UI capabilities:
+Removed the hard-coded `0.1.0` display from Settings.
 
-- list staff accounts;
-- filter by `ADMIN` or `LIBRARIAN` role;
-- create administrator/librarian accounts;
-- show enabled/disabled state and active-session count;
-- enable/disable staff accounts;
-- reset staff passwords;
-- show current-account context;
-- prevent the UI from offering self-disable on the active account;
-- display server errors/success states.
+Implemented:
 
-Server-side `AdminUserService` remains authoritative and includes account safeguards, password hashing, session revocation after password reset, and audit integration.
+- Vite reads `frontend/package.json` during configuration;
+- Vite injects `__APP_VERSION__` at build time;
+- `frontend/src/env.d.ts` declares the injected constant for strict TypeScript;
+- Settings renders `{__APP_VERSION__}` and identifies the source as the 2.0.x release-candidate line.
 
-### Strict TypeScript correctness
+Commits:
 
-`frontend/tsconfig.app.json` enables `exactOptionalPropertyTypes`. `App.tsx` passed a `string | undefined` login error value into a prop declared only as `error?: string`, which is invalid under this strict mode.
+- `2464145b` — `build: inject frontend package version`
+- `22b11afc` — `build: type injected application version`
+- `c0d3cfe4` — `release: show build version in settings`
 
-Fixed `LoginPageProps.error` so explicit `undefined` is legal under the configured compiler semantics.
+### Cross-manifest version guard
 
-A minimal local strict-TypeScript reproduction confirmed the exact optional-property incompatibility before the source fix. This was a targeted compiler-semantic check, not a substitute for running the repository's complete TypeScript build.
+Added `scripts/check-version.mjs`.
 
-### Async form lifecycle safety
+It:
 
-The new staff-account creation handler originally referenced `event.currentTarget` after an awaited network request. The final pass captures the form element before the asynchronous boundary and resets that stable element after a successful create operation.
+- reads `frontend/package.json`;
+- extracts the LibraCore backend project version from `backend/pom.xml`;
+- fails if they disagree;
+- accepts an optional expected value/tag and strips a leading `v`;
+- prints the synchronized version when valid.
 
-This avoids relying on event-lifecycle behavior after asynchronous control returns.
+A local dependency-free execution test was performed with 2.0.12 fixture manifests and returned:
 
-### Mobile navigation reachability
-
-The mobile shell rendered only the first five authorized navigation items even though the CSS already implements a horizontally scrollable mobile navigation bar. That made later destinations such as reports, staff accounts, or settings unreachable from the mobile shell for some roles.
-
-The shell now renders every role-authorized item in the scrollable mobile navigation.
-
-### Frontend dependency configuration
-
-- Direct frontend dependencies and build/test tools are exact-pinned in `frontend/package.json`.
-- Added `npm run check`, which runs lint, strict type checking, deterministic Vitest execution, and the production Vite build in one command.
-- Added a frontend CI workflow intended to generate/refresh the npm lockfile, install from it, run the full frontend quality gate, and commit the generated lockfile on `main` when repository Actions permissions permit.
-
-**Important:** the lockfile generation has not been observed to complete. `frontend/package-lock.json` is still absent at this checkpoint.
-
-### Documentation/install-command bug
-
-Earlier documentation used `npm ci` even though no `frontend/package-lock.json` existed. A fresh clone therefore could not follow the documented command successfully.
-
-README, setup, contribution, testing, release, and troubleshooting guidance now accurately use `npm install` while the lockfile is absent and explicitly say to switch to `npm ci` after a synchronized lockfile is committed.
-
-## Repository-quality additions
-
-### Security and privacy
-
-Added:
-
-- `SECURITY.md`
-- `PRIVACY.md`
-- `THREAT_MODEL.md`
-
-Coverage includes private vulnerability reporting, password/session handling, data categories, browser storage, CSV/backup sensitivity, trust boundaries, threat/abuse cases, residual risk, operational secret handling, and deployment responsibilities.
-
-### Open-source governance
-
-Added:
-
-- `CONTRIBUTING.md`
-- `CODE_OF_CONDUCT.md`
-- `SUPPORT.md`
-- `.github/PULL_REQUEST_TEMPLATE.md`
-- `.github/ISSUE_TEMPLATE/bug_report.yml`
-- `.github/ISSUE_TEMPLATE/feature_request.yml`
-- `.github/ISSUE_TEMPLATE/config.yml`
-- `.github/FUNDING.yml`
-
-The issue forms explicitly discourage posting secrets/member data and route exploitable security issues to private disclosure.
-
-### Dependency and security automation
-
-Added:
-
-- `.github/dependabot.yml` for Maven, npm, and GitHub Actions;
-- `.github/workflows/codeql.yml` for Java and JavaScript/TypeScript analysis;
-- `.github/workflows/dependency-review.yml` for pull-request dependency changes;
-- `.github/workflows/frontend-ci.yml` for frontend quality verification and lockfile bootstrap;
-- `.github/workflows/release.yml` for tagged verification, artifact packaging, SHA-256 checksum creation, and GitHub Release publication.
-
-Existing `.github/workflows/backend-ci.yml` remains the backend Maven/PostgreSQL packaged-startup/health quality gate.
-
-### Documentation set
-
-Added or completed:
-
-- `CHANGELOG.md`
-- `ROADMAP.md`
-- `docs/architecture.md`
-- `docs/api.md`
-- `docs/setup.md`
-- `docs/development.md`
-- `docs/testing.md`
-- `docs/deployment.md`
-- `docs/backup-restore.md`
-- `docs/accessibility.md`
-- `docs/performance.md`
-- `docs/release.md`
-- `docs/troubleshooting.md`
-- `docs/branch-protection.md`
-- `docs/adr/0001-modular-monolith.md`
-- `docs/adr/0002-postgresql-flyway.md`
-- `docs/adr/0003-opaque-bearer-sessions.md`
-- `docs/repository-reference.md`
-
-`docs/repository-reference.md` is synchronized to the complete recursive tree at the final pre-handoff checkpoint, including the dependency-review workflow and this `what_changed.md` continuity file. Keep it synchronized whenever repository structure/public behavior/operations/security change.
-
-### README
-
-README now reflects the actual repository rather than an aspirational skeleton. It documents:
-
-- current implementation/features;
-- current stack versions;
-- administrator staff-account management;
-- repository layout;
-- truthful frontend install/verification commands;
-- architecture and ADR links;
-- API/security/privacy/accessibility/testing/performance/operations/release guidance;
-- project contacts;
-- MIT license;
-- Buy Me a Coffee funding link;
-- visible `Made by the Sanskar` attribution.
-
-## Static contract audit performed
-
-The final pass reviewed the live GitHub tree and the endpoint/UI contracts rather than relying only on the original prompt snapshot.
-
-Verified at source level:
-
-- authentication routes and bearer-session client integration;
-- staff-account endpoint methods versus frontend methods (`GET`, `POST`, `PATCH`);
-- password-reset session revocation behavior in the backend service;
-- member/catalog/circulation/reservation/fine/report/export endpoint families used by frontend pages;
-- optional circulation-policy effective date contract;
-- CSV export/import HTTP methods;
-- responsive mobile navigation CSS supports horizontal overflow;
-- frontend API client provides `get`, `post`, `put`, `patch`, CSV upload, and CSV download methods;
-- migrations V1 through V6 are present;
-- backend unit tests exist for ISBN, fine-policy calculation, text normalization, and CSV codec;
-- frontend tests exist for API utility, formatting, session, and theme behavior;
-- source search returned no indexed `TODO` or `FIXME` markers at the end of the pass;
-- the final recursive Git tree response reported `truncated: false`, so the tracked-file inventory used for `docs/repository-reference.md` was complete at that checkpoint.
-
-A search-index result is not proof that no hidden defect exists; it is only one audit signal.
-
-## Verification evidence and limitations
-
-### What was actually verified
-
-- Live GitHub repository/file tree and current file contents were inspected through the connected GitHub API.
-- A non-truncated recursive Git tree was inspected and reconciled with `docs/repository-reference.md`.
-- Backend and frontend HTTP contracts relevant to the completed pages were cross-checked directly against controller/model/service/client code.
-- Strict TypeScript optional-property behavior was reproduced locally with a minimal compiler test before the login-prop fix.
-- Current `main` branch metadata was checked.
-- Current frontend lockfile presence was checked.
-- Current combined commit status was checked on the final pre-handoff source checkpoint and remained empty through the available status interface.
-
-### What was not proven in this execution environment
-
-The local execution container could not clone/fetch the GitHub repository/dependencies because outbound DNS/network access to GitHub was unavailable. Therefore this pass must **not** claim that these complete commands ran successfully locally:
-
-```bash
-cd backend
-mvn clean verify
+```text
+LibraCore version 2.0.12 is synchronized across frontend and backend manifests.
 ```
+
+This tests the guard itself; it is not a substitute for the repository's Maven/npm build.
+
+Commit:
+
+- `2da8b109` — `build: add cross-manifest version guard`
+
+### Version synchronization CI
+
+Added `.github/workflows/version-sync.yml` so relevant manifest/script changes get a lightweight, dependency-minimal version consistency check.
+
+Commit:
+
+- `0f93167e` — `ci: enforce synchronized release versions`
+
+### Backend CI version bug fixed
+
+Changing the Maven version exposed a concrete CI defect: backend CI still attempted to run:
+
+```text
+target/libracore-backend-0.1.0-SNAPSHOT.jar
+```
+
+That filename no longer matches the packaged artifact. Backend CI now discovers the packaged `libracore-backend-*.jar` dynamically, excludes Spring Boot's `.original` artifact, and fails clearly if no packaged JAR exists.
+
+Commit:
+
+- `a998e189` — `ci: make backend startup version independent`
+
+### Release workflow hardened
+
+The tagged release workflow no longer contains the historical `0.1.0-SNAPSHOT` artifact path.
+
+It now:
+
+- runs backend Maven verification against PostgreSQL;
+- requires `frontend/package-lock.json` before setting up cached npm installation;
+- validates the pushed tag against backend/frontend manifest versions;
+- installs frontend dependencies with `npm ci --ignore-scripts`;
+- runs `npm run check`;
+- discovers the packaged backend JAR dynamically;
+- packages the frontend production bundle;
+- creates SHA-256 checksums;
+- publishes artifacts through the GitHub release action.
+
+Relevant commits:
+
+- `3eb17e29` — `ci: harden 2.0.12 release verification`
+- `db3fe2a4` — `ci: fail clearly when release lockfile is absent`
+
+### Frontend CI made read-only and reproducible
+
+The previous frontend CI tried to generate and push a lockfile from a normal CI run. That mixed verification with repository mutation and required broad `contents: write` permission.
+
+Frontend CI now:
+
+- has read-only repository permission;
+- requires an already committed lockfile;
+- uses Node 24 + npm cache keyed by the lockfile;
+- checks version synchronization;
+- installs using `npm ci`;
+- runs the aggregate frontend quality gate.
+
+Commit:
+
+- `a9466a5e` — `ci: make frontend verification read-only and reproducible`
+
+### Explicit lockfile bootstrap workflow
+
+Because the lockfile is not yet committed and this execution environment cannot reach the npm registry, lockfile generation was separated into `.github/workflows/lockfile-bootstrap.yml`.
+
+The maintainer-triggered workflow:
+
+1. checks out `main`;
+2. uses Node 24;
+3. generates `frontend/package-lock.json` with `npm install --package-lock-only --ignore-scripts`;
+4. installs from the generated lock with `npm ci`;
+5. runs `npm run check`;
+6. commits/pushes the lockfile only when it changed.
+
+Commit:
+
+- `5a99a727` — `ci: add explicit frontend lockfile bootstrap`
+
+The available GitHub connector does not expose workflow dispatch, so this workflow could be committed but not triggered from this chat.
+
+## 2.0.12 documentation completed
+
+Updated or added:
+
+- `README.md` — identifies 2.0.12 as the current source release candidate and documents version synchronization plus lockfile rules;
+- `CHANGELOG.md` — adds the 2.0.12 release-candidate record and outstanding release gates;
+- `ROADMAP.md` — moves current closure work to the 2.0.12 line and separates later 2.1.x/2.2.x hardening;
+- `docs/release.md` — defines strict 2.0.12 tag/version/lockfile/reproducibility gates;
+- `docs/releases/2.0.12.md` — dedicated 2.0.12 release-candidate scope and pre-tag checklist;
+- `docs/repository-reference.md` — exhaustive file-purpose reference refreshed for the new workflows, version guard, build-version declaration, release notes, and current lockfile limitation;
+- this `what_changed.md` — canonical current continuation record.
+
+Documentation commits:
+
+- `1dec12af` — `docs: align README with version 2.0.12`
+- `628efd02` — `docs: harden 2.0.12 release process`
+- `f18fab24` — `docs: move release roadmap to 2.0.12`
+- `03b78f4d` — `docs: prepare 2.0.12 changelog`
+- `84e5a747` — `docs: add 2.0.12 release candidate notes`
+- `7b66a79b` — `docs: refresh exhaustive reference for 2.0.12`
+
+## Existing important fixes retained from the preceding final audit
+
+The previous audit already fixed/completed:
+
+- missing frontend application entry point;
+- circulation, reservation, reports, and settings pages;
+- administrator staff-account frontend workflow;
+- strict `exactOptionalPropertyTypes` login-prop defect;
+- asynchronous staff form reset safety;
+- mobile route truncation;
+- direct frontend dependency version pinning;
+- aggregate `npm run check` command;
+- backend/frontend/security/release workflow foundations;
+- security/privacy/threat model;
+- contribution/conduct/support policies;
+- issue forms, PR template, Dependabot, CodeQL, dependency review;
+- architecture/API/setup/development/testing/deployment/backup/accessibility/performance/release/troubleshooting/branch-protection/ADR documentation;
+- exhaustive repository file reference.
+
+## Verification evidence from this 2.0.12 pass
+
+Actually checked:
+
+- current `main` branch through the connected GitHub API;
+- backend Maven manifest version and dependencies;
+- frontend npm manifest version and tool versions;
+- frontend Settings source;
+- Vite configuration and strict frontend TypeScript configuration;
+- backend CI workflow;
+- frontend CI workflow;
+- release workflow;
+- release/roadmap/changelog/repository documentation;
+- `frontend/package-lock.json` presence;
+- current branch-protection state;
+- combined commit statuses for the final pre-handoff 2.0.12 checkpoint;
+- version-guard behavior in a local dependency-free fixture.
+
+Observed at the final pre-handoff checkpoint:
+
+- `frontend/package-lock.json`: **not present** (`404 Not Found`);
+- `main` protection: **disabled** (`protected: false`);
+- combined commit status list: **empty** through the available connector.
+
+Local npm registry access was attempted for `npm install --package-lock-only`; it did not complete within the execution timeout, consistent with the environment's lack of usable outbound dependency access. Therefore no lockfile was fabricated or manually guessed.
+
+## Claims intentionally not made
+
+This pass does **not** claim:
+
+- all Maven tests passed;
+- frontend lint/typecheck/tests/build passed against installed dependencies;
+- CodeQL passed;
+- clean PostgreSQL/Flyway startup passed;
+- backup/restore drill passed;
+- browser smoke tests passed;
+- accessibility release evidence is complete;
+- 2.0.12 is release-green or already published.
+
+These require observable execution evidence.
+
+## Remaining 2.0.12 release blockers
+
+### 1. Generate and commit `frontend/package-lock.json`
+
+Preferred hosted path:
+
+- GitHub Actions → **Frontend Lockfile Bootstrap** → Run workflow;
+- inspect the generated commit/lockfile;
+- confirm the workflow's frontend verification succeeds.
+
+Equivalent local path:
 
 ```bash
 cd frontend
-npm install
+npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+npm ci --ignore-scripts --no-audit --no-fund
 npm run check
+git add package-lock.json
+git commit -m "build: lock frontend dependencies for 2.0.12"
+git push
 ```
 
-Likewise, no successful GitHub Actions status was observable for the final pre-handoff source head through the available status interface. The combined status list was empty at the evidence checkpoint.
+### 2. Observe successful CI/security checks
 
-Therefore the following claims are intentionally **not** made:
+Required evidence on the final intended release commit:
 
-- “all Maven tests passed”;
-- “frontend lint/typecheck/tests/build passed”;
-- “CodeQL passed”;
-- “clean Flyway startup passed”;
-- “the repository is release-green.”
+- Backend CI;
+- Frontend CI;
+- Version Sync;
+- CodeQL;
+- dependency/security checks relevant to the change set.
 
-This honesty is required by the project's Definition of Done.
+Fix every failure before tagging.
 
-## Known release blockers / unfinished verification
+### 3. Clean database/runtime evidence
 
-### 1. Frontend transitive lockfile is missing
+Use a clean disposable PostgreSQL database and prove:
 
-`frontend/package-lock.json` returned `404 Not Found` at the final evidence check.
-
-Direct versions are exact-pinned, so drift is reduced, but transitive dependency resolution is not yet reproducible enough for the intended release gate.
-
-Required closure:
-
-```bash
-cd frontend
-npm install
-# review package-lock.json
-npm run check
-git add package.json package-lock.json
-git commit -m "build: lock frontend dependencies"
-```
-
-After the lockfile is committed and synchronized, clean CI/setup should use `npm ci`.
-
-### 2. CI success is not yet observed
-
-Workflows exist, but the final pre-handoff combined status did not expose completed checks through the available connector. Do not infer success from workflow YAML presence.
-
-Required closure:
-
-- observe backend CI;
-- observe frontend CI;
-- observe CodeQL;
-- observe dependency review on a representative dependency-changing PR;
-- fix all failures before tagging a release.
-
-### 3. `main` branch protection is not enabled
-
-GitHub branch metadata at the final evidence checkpoint reported `protected: false` with required status checks unenforced.
-
-Required closure:
-
-- enable a GitHub ruleset/branch protection for `main` using `docs/branch-protection.md`;
-- require stable backend/frontend/security check names after confirming they run correctly;
-- block force pushes/deletion and minimize bypass access.
-
-This is a repository-host setting and cannot be completed merely by committing a Markdown file.
-
-### 4. Browser-level end-to-end automation is still absent
-
-Primary journeys are implemented but a deterministic browser E2E suite is not yet committed. Until it exists, release validation needs manual smoke testing for:
-
-- administrator sign-in/dashboard;
-- administrator staff-account create/filter/disable-enable/password-reset;
-- librarian catalog/member/circulation/report flows;
-- member catalog/loan/reservation/fine self-service;
-- logout/session expiry;
-- responsive mobile route access;
-- CSV import/export;
-- error/loading/empty states.
-
-### 5. Automated accessibility evidence is incomplete
-
-Accessibility-oriented implementation/documentation exists, but a stable release should record the manual keyboard/screen-reader/zoom/reduced-motion pass described in `docs/accessibility.md` and ideally add automated scanning in the E2E suite.
-
-### 6. Clean PostgreSQL migration/startup/restore evidence remains required
-
-Before a stable release, use a clean disposable PostgreSQL database and verify:
-
-- all Flyway migrations V1–V6 apply in order;
+- migrations V1–V6 apply in order;
 - packaged backend starts;
-- `/actuator/health` reports healthy;
+- `/actuator/health` is healthy;
 - representative domain operations work;
-- backup/restore drill succeeds on an isolated target.
+- isolated backup/restore drill succeeds.
 
-## Exact next closure sequence
+### 4. Role-based application smoke evidence
 
-Do these in order. Do not add unrelated features before these release gates are closed.
+Verify administrator, librarian, and member journeys, especially:
 
-1. **Generate and commit `frontend/package-lock.json`** with the supported Node/npm toolchain.
-2. **Run frontend verification** from a clean checkout using `npm ci && npm run check` after the lock exists.
-3. **Run backend verification** with `mvn clean verify` against the expected Java toolchain.
-4. **Run clean PostgreSQL startup verification** and confirm Flyway + `/actuator/health`.
-5. **Observe GitHub Actions** for backend CI, frontend CI, CodeQL, and relevant dependency/security checks; fix every failure.
-6. **Run role-based smoke tests** for administrator, librarian, and member journeys, including the new staff-account page.
-7. **Perform accessibility release review** and record keyboard/screen-reader/zoom/reduced-motion evidence.
-8. **Perform an isolated backup/restore drill** and record evidence.
-9. **Enable `main` branch protection/rules** using the now-stable check names.
-10. **Re-read `CHANGELOG.md`, `ROADMAP.md`, README, this handoff, and release notes** for final version consistency.
-11. Only then tag/publish the release using the release process in `docs/release.md`.
+- login/logout/session expiry;
+- catalog search/detail/copy administration;
+- member administration/account linking;
+- issue/return/renew/fine settlement;
+- reservations/waitlists;
+- administrator staff-account creation/filter/enable-disable/password reset;
+- reports/audit;
+- CSV import/export;
+- responsive/mobile route access;
+- loading/empty/error states.
 
-## Important final-pass commits
+### 5. Accessibility release evidence
 
-This audit intentionally used many focused commits. Important groups include:
+Record keyboard, visible-focus, zoom/reflow, reduced-motion, and screen-reader checks described in `docs/accessibility.md`.
 
-### Frontend/product
+### 6. Enable `main` branch protection/rules
 
-- `0a39d951` — `fix: allow explicit undefined login error state`
-- `d393e612` — `feat: add administrator staff account management`
-- `2827fc73` — staff-account navigation copy
-- `e67ab16e` — administrator staff-account route
-- `6ae2b78d` — administrator navigation exposure
-- `223afcb0` — administrator page rendering/route authorization
-- `a20c2b9a` — `fix: preserve staff form across async submission`
-- `be80a0a7` — `fix: keep all authorized routes reachable on mobile`
-- frontend entry/pages/design/test commits from the preceding continuation pass are part of this same final implementation line.
+The repository currently reports `protected: false`.
 
-### Build/CI/security automation
+After check names are stable and green, configure the recommended rules in `docs/branch-protection.md`, including required checks, force-push/deletion restrictions, and minimal bypass access.
 
-- `6a0fa283` — frontend CI/lockfile bootstrap
-- `01f78d29` — aggregate frontend quality command
-- direct frontend dependency/tool versions were exact-pinned during this final line
-- `c8d006d7` — CodeQL analysis
-- `56028f34` — pull-request dependency review
-- `9a480f24` — Dependabot configuration
-- `78c849ae` — release artifact workflow
+The currently available GitHub write connector does not expose branch-protection/ruleset mutation, so this host-level setting cannot be completed by a source-file commit.
 
-### Documentation/governance
+## Exact final closure sequence for 2.0.12
 
-- security/privacy/threat-model, contribution/conduct/support, setup/architecture/testing/API/operations/accessibility/performance/release/troubleshooting, ADR, branch-protection, issue/PR/funding, changelog/roadmap commits are intentionally separated for reviewability.
-- `a1f18a53` — exhaustive tracked-file reference.
-- `230222fa` — final-audit changelog synchronization.
-- `e59f4333` — initial final engineering handoff.
-- `d2178ee9` — repository-reference synchronization after dependency-review was added.
+1. Generate/review/commit `frontend/package-lock.json`.
+2. Confirm `node scripts/check-version.mjs 2.0.12`.
+3. Run/observe Backend CI.
+4. Run/observe Frontend CI using the committed lockfile.
+5. Run/observe Version Sync and CodeQL/security checks.
+6. Verify clean PostgreSQL/Flyway packaged startup and `/actuator/health`.
+7. Execute role-based smoke tests.
+8. Record accessibility evidence.
+9. Execute isolated backup/restore drill.
+10. Enable `main` branch protection using stable green check names.
+11. Re-read `CHANGELOG.md`, `ROADMAP.md`, `docs/releases/2.0.12.md`, `docs/release.md`, and this handoff.
+12. Only then create and push `v2.0.12`.
 
-Use `git log --oneline` for the full exact sequence rather than treating this selected list as exhaustive.
+Release command after every gate is closed:
+
+```bash
+git tag -a v2.0.12 -m "LibraCore v2.0.12"
+git push origin v2.0.12
+```
 
 ## Documentation map
 
-Start here depending on the task:
-
-- project overview: `README.md`
-- every tracked file and its purpose: `docs/repository-reference.md`
-- implementation architecture: `docs/architecture.md`
-- API surface: `docs/api.md`
-- local setup: `docs/setup.md`
-- contribution/development: `CONTRIBUTING.md`, `docs/development.md`
-- test gates: `docs/testing.md`
-- security/privacy: `SECURITY.md`, `PRIVACY.md`, `THREAT_MODEL.md`
+- overview/current source version: `README.md`
+- complete tracked-file map: `docs/repository-reference.md`
+- 2.0.12 release-candidate notes: `docs/releases/2.0.12.md`
+- release process: `docs/release.md`
+- delivered changes: `CHANGELOG.md`
+- remaining release/product work: `ROADMAP.md`
+- architecture: `docs/architecture.md`
+- API: `docs/api.md`
+- setup: `docs/setup.md`
+- development: `docs/development.md`
+- testing: `docs/testing.md`
 - deployment: `docs/deployment.md`
 - backup/restore: `docs/backup-restore.md`
 - accessibility: `docs/accessibility.md`
 - performance: `docs/performance.md`
-- release process: `docs/release.md`
 - troubleshooting: `docs/troubleshooting.md`
-- branch rules: `docs/branch-protection.md`
+- branch protection: `docs/branch-protection.md`
+- security/privacy: `SECURITY.md`, `PRIVACY.md`, `THREAT_MODEL.md`
 - architecture decisions: `docs/adr/`
-- delivered changes: `CHANGELOG.md`
-- remaining roadmap: `ROADMAP.md`
-- continuation/audit truth: this file.
+- continuation truth: this file.
 
-## Final rule for future continuation
+## Continuation rule
 
-Do not restart feature expansion by guessing. First read this file and `ROADMAP.md`, check the current `main` head, inspect live CI/rules/lockfile state, and close the explicit release blockers above. If any new failure appears, fix it with the smallest coherent code/test/documentation change and record the result here.
+Do not add unrelated feature expansion before closing the explicit 2.0.12 release blockers. On the next continuation, first inspect current `main`, `frontend/package-lock.json`, CI statuses, and branch protection. If the lockfile has appeared, switch clean frontend documentation/verification fully to `npm ci`, reconcile the repository reference, run/observe the remaining gates, and only then consider `v2.0.12` ready for tagging.
 
 **Made by the Sanskar**
