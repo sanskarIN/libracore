@@ -24,6 +24,7 @@ const NAVIGATION: NavItem[] = [
   { route: 'circulation', label: copy.navigation.circulation, roles: ['ADMIN', 'LIBRARIAN'] },
   { route: 'reservations', label: copy.navigation.reservations },
   { route: 'reports', label: copy.navigation.reports, roles: ['ADMIN', 'LIBRARIAN'] },
+  { route: 'staff-accounts', label: copy.navigation.staffAccounts, roles: ['ADMIN'] },
   { route: 'settings', label: copy.navigation.settings },
 ]
 
