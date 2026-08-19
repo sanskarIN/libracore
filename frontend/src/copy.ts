@@ -9,6 +9,7 @@ export const copy = {
     circulation: 'Circulation',
     reservations: 'Reservations',
     reports: 'Reports',
+    staffAccounts: 'Staff accounts',
     settings: 'Settings',
   },
   actions: {
