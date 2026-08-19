@@ -36,13 +36,14 @@ export function AdminUsersPage({ api, user }: { api: ApiClient; user: UserIdenti
     event.preventDefault()
     setError(null)
     setNotice(null)
-    const form = new FormData(event.currentTarget)
+    const formElement = event.currentTarget
+    const form = new FormData(formElement)
     const email = String(form.get('email') || '').trim()
     const password = String(form.get('password') || '')
     const selectedRole = String(form.get('role') || '')
     try {
       await api.post<StaffUserView>('/admin/users', { email, password, role: selectedRole })
-      event.currentTarget.reset()
+      formElement.reset()
       setNotice(`Created ${selectedRole.toLowerCase()} account for ${email}.`)
       await load()
     } catch (reason) {
