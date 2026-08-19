@@ -18,16 +18,15 @@ cd backend
 mvn clean verify
 ```
 
-and:
+and, until a synchronized `frontend/package-lock.json` is committed:
 
 ```bash
 cd frontend
-npm ci
-npm run lint
-npm run typecheck
-npm run test:run
-npm run build
+npm install
+npm run check
 ```
+
+Once the lockfile is present on the branch, use `npm ci` for clean/reproducible dependency installation.
 
 ## Engineering expectations
 
