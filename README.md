@@ -32,6 +32,7 @@ The repository is being built incrementally. `what_changed.md` is the canonical 
 - Library-card identifiers
 - Application accounts with role-based authorization
 - Administrator, librarian, and member role model
+- Administrator UI/API for staff account creation, enable/disable control, password reset, and session revocation on reset
 - Opaque bearer-session architecture; passwords are never stored in plaintext
 
 ### Circulation
@@ -39,14 +40,15 @@ The repository is being built incrementally. `what_changed.md` is the canonical 
 - Return/check-in
 - Renewal with policy validation
 - Reservation and waitlist workflow
-- Overdue and circulation reporting foundations
+- Fine assessment and settlement workflows
+- Overdue and circulation reporting
 - Transactional state changes and audit records
 
 ### Policy and operations
 - Configurable fine rules rather than hard-coded fees
 - Multi-branch-ready schema
-- Mock-safe notification adapter for local development
-- CSV/import-export and backup/restore architecture
+- Mock-safe notification adapter for local development and SMTP adapter for configured deployments
+- Bounded CSV import/export and database backup/restore tooling
 - Structured, privacy-conscious audit data
 
 ### Product quality
@@ -55,6 +57,7 @@ The repository is being built incrementally. `what_changed.md` is the canonical 
 - Keyboard and screen-reader-oriented UI conventions
 - Loading, empty, success, warning, and error states
 - Security, privacy, accessibility, performance, testing, release, and troubleshooting documentation
+- Backend/frontend CI, CodeQL, Dependabot, release automation, issue/PR templates, and funding metadata
 
 ## Screenshots
 
@@ -66,13 +69,13 @@ Real screenshots will be added after the UI reaches a stable release-candidate s
 |---|---|
 | Backend | Java 25, Spring Boot 4.1, Spring Security, Spring JDBC |
 | Database | PostgreSQL, Flyway migrations |
-| Frontend | React 19.2, TypeScript, Vite 8.1 |
+| Frontend | React 19.2, TypeScript 6, Vite 8.2 |
 | API | JSON REST under `/api` |
 | Local services | Docker Compose |
 | CI | GitHub Actions |
-| Security automation | CodeQL, dependency review/updates, secret-safe configuration |
+| Security automation | CodeQL, Dependabot, secret-safe configuration |
 
-Spring Boot 4.1 supports Java 25. Vite 8 requires a modern Node.js release; this repository recommends Node.js 22 LTS or newer compatible releases.
+Spring Boot 4.1 supports Java 25. The frontend package declares the supported Node.js range; Node.js 24 is used by frontend/release CI.
 
 ## Repository layout
 
@@ -82,25 +85,28 @@ Spring Boot 4.1 supports Java 25. Vite 8 requires a modern Node.js release; this
 ├── backend/                 # Spring Boot application and database migrations
 ├── frontend/                # React + TypeScript application
 ├── docs/                    # Architecture, setup, operations, ADRs, file reference
+├── scripts/                 # Backup/restore operational helpers
 ├── .env.example             # Placeholder-only local configuration contract
 ├── compose.yml              # Local PostgreSQL
 ├── CHANGELOG.md
 ├── ROADMAP.md
 ├── SECURITY.md
 ├── PRIVACY.md
-└── what_changed.md          # Cross-chat / cross-session handoff
+└── what_changed.md          # Cross-session implementation handoff
 ```
+
+For a tracked-file purpose map, see [`docs/repository-reference.md`](docs/repository-reference.md).
 
 ## Prerequisites
 
 - Git
 - Java 25 JDK
 - Maven 3.6.3+
-- Node.js compatible with Vite 8 (Node 22 LTS is recommended)
+- Node.js compatible with `frontend/package.json`
 - npm
 - Docker with Compose support, or a separately managed PostgreSQL instance
 
-See [`docs/setup.md`](docs/setup.md) for OS-oriented setup notes and verification commands.
+See [`docs/setup.md`](docs/setup.md) for setup notes and verification commands.
 
 ## Quick start
 
@@ -136,11 +142,13 @@ In a second terminal:
 
 ```bash
 cd frontend
-npm ci
+npm install
 npm run dev
 ```
 
 Default development UI: `http://localhost:5173`.
+
+> A committed frontend transitive lockfile is still tracked as a release-hardening task. Until `frontend/package-lock.json` exists on the checked-out commit, use `npm install`; `npm ci` requires that lockfile.
 
 ## Configuration
 
@@ -172,12 +180,11 @@ mvn spring-boot:run
 
 ```bash
 cd frontend
-npm ci
-npm run lint
-npm run typecheck
-npm test
-npm run build
+npm install
+npm run check
 ```
+
+`npm run check` performs linting, strict type checking, deterministic Vitest execution, and a production Vite build.
 
 ### Full local database reset
 
@@ -210,7 +217,7 @@ Schema changes belong in `backend/src/main/resources/db/migration/`. Do not edit
 ## API conventions
 
 - Base path: `/api`
-- JSON request/response bodies
+- JSON request/response bodies plus explicit CSV exchange endpoints
 - Validation errors use a stable problem-style response shape
 - Authentication uses opaque bearer sessions where protected endpoints require identity
 - Authorization is enforced server-side; frontend visibility is not treated as security
@@ -243,7 +250,7 @@ The intended release gate includes:
 
 - backend compile + unit/integration tests
 - Flyway migration verification from a clean database
-- frontend lint + type checks + tests + production build
+- frontend lint + strict type checks + tests + production build
 - accessibility checks
 - dependency/security analysis
 - documentation/link review
@@ -257,9 +264,15 @@ Large lists must use bounded queries and pagination. Database indexes should be 
 
 ## Import, export, and recovery
 
-Import must validate headers, size, encoding, required fields, duplicate policy, authorization, and transactional behavior before changing durable state. Exports should be scoped and privacy-aware. Database backup/restore guidance is documented separately from application-level CSV exchange.
+Import validates bounded CSV input before changing durable state. Exports are scoped and privacy-aware. Database backup/restore guidance is documented separately from application-level CSV exchange.
 
 See [`docs/backup-restore.md`](docs/backup-restore.md).
+
+## Deployment and operations
+
+Production deployment requires explicit TLS, secret storage, CORS, reverse-proxy limits, database isolation, backup retention, monitoring, and migration decisions. Development defaults are not a production security boundary.
+
+Read [`docs/deployment.md`](docs/deployment.md) and [`docs/troubleshooting.md`](docs/troubleshooting.md).
 
 ## Releases
 
@@ -267,7 +280,7 @@ Versioning follows Semantic Versioning once stable public releases begin. Releas
 
 ## Contributing
 
-Contributions are welcome. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md), follow the Code of Conduct, keep changes focused, add tests for behavior changes, and update documentation with behavior.
+Contributions are welcome. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md), follow [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), keep changes focused, add tests for behavior changes, and update documentation with behavior.
 
 ## Support and contact
 
