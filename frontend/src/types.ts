@@ -216,3 +216,13 @@ export interface FineRuleView {
   effectiveFrom: string
   effectiveUntil?: string
 }
+
+export interface StaffUserView {
+  id: string
+  email: string
+  role: 'ADMIN' | 'LIBRARIAN'
+  enabled: boolean
+  createdAt: string
+  updatedAt: string
+  activeSessionCount: number
+}
