@@ -62,13 +62,15 @@ In another terminal:
 
 ```bash
 cd frontend
-npm ci
+npm install
 npm run dev
 ```
 
 Open `http://localhost:5173`.
 
 The default frontend API base is `http://localhost:8080/api`; override with `VITE_API_BASE_URL` when needed.
+
+`frontend/package.json` currently pins direct dependency/tool versions exactly, but the repository does not yet contain `frontend/package-lock.json`. Use `npm install` on commits without that lockfile. Once a lockfile is committed and kept synchronized, clean verification should use `npm ci`.
 
 ## Full verification
 
@@ -79,12 +81,11 @@ mvn clean verify
 
 ```bash
 cd frontend
-npm ci
-npm run lint
-npm run typecheck
-npm run test:run
-npm run build
+npm install
+npm run check
 ```
+
+`npm run check` runs lint, strict type checking, deterministic tests, and the production build.
 
 ## Reset disposable development data
 
