@@ -32,6 +32,7 @@ This document describes every tracked source/configuration/documentation file in
 - `.github/workflows/backend-ci.yml` — Java/PostgreSQL backend CI, Maven verification, packaged startup, and health check.
 - `.github/workflows/frontend-ci.yml` — Node frontend gate; currently bootstraps a lockfile, installs dependencies, then runs lint/typecheck/tests/build and can commit the generated lock on `main` when Actions permissions allow.
 - `.github/workflows/codeql.yml` — scheduled/push/PR CodeQL analysis for Java and JavaScript/TypeScript.
+- `.github/workflows/dependency-review.yml` — pull-request dependency-change review for newly introduced vulnerable dependencies.
 - `.github/workflows/release.yml` — tagged release verification, backend/frontend packaging, checksums, and GitHub Release publication.
 
 ## Backend build
