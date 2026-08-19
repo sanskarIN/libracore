@@ -1,0 +1,76 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: libracore_test
+          POSTGRES_USER: libracore
+          POSTGRES_PASSWORD: test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U libracore -d libracore_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/libracore_test
+      DB_USERNAME: libracore
+      DB_PASSWORD: test-password
+      APP_NOTIFICATION_MODE: MOCK
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Verify backend
+        working-directory: backend
+        run: mvn -B --no-transfer-progress clean verify
+
+      - name: Start packaged application
+        working-directory: backend
+        run: |
+          java -jar target/libracore-backend-0.1.0-SNAPSHOT.jar > /tmp/libracore-backend.log 2>&1 &
+          echo $! > /tmp/libracore-backend.pid
+
+      - name: Verify migrations and health endpoint
+        run: curl --fail --silent --show-error --retry 20 --retry-all-errors --retry-delay 2 http://localhost:8080/actuator/health
+
+      - name: Stop application
+        if: always()
+        run: |
+          if [ -f /tmp/libracore-backend.pid ]; then
+            kill "$(cat /tmp/libracore-backend.pid)" 2>/dev/null || true
+          fi
+
+      - name: Print application log on failure
+        if: failure()
+        run: cat /tmp/libracore-backend.log || true
