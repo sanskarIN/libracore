@@ -2,7 +2,17 @@
 
 ## Release gate
 
-A release candidate must pass the smallest relevant checks during development and the full suite before release.
+The current source line is prepared for **2.0.12**. A release candidate must pass the smallest relevant checks during development and the full suite before `v2.0.12` is tagged.
+
+### Version synchronization
+
+From the repository root:
+
+```bash
+node scripts/check-version.mjs 2.0.12
+```
+
+The backend Maven version, frontend npm version, and intended release version must agree. GitHub Actions also runs the Version Sync workflow on relevant manifest/script changes.
 
 ### Backend
 
@@ -11,11 +21,11 @@ cd backend
 mvn clean verify
 ```
 
-This must compile the application, run unit/integration tests configured by Maven, package the application, and leave Flyway migrations compatible with a clean PostgreSQL database. CI additionally starts the packaged JAR and checks `/actuator/health` against PostgreSQL.
+This must compile the application, run unit/integration tests configured by Maven, package the application, and leave Flyway migrations compatible with a clean PostgreSQL database. CI additionally discovers the packaged JAR without a hard-coded version filename, starts it, and checks `/actuator/health` against PostgreSQL.
 
 ### Frontend
 
-Until `frontend/package-lock.json` is committed and synchronized:
+For local development on a commit that does not yet contain `frontend/package-lock.json`:
 
 ```bash
 cd frontend
@@ -23,7 +33,15 @@ npm install
 npm run check
 ```
 
-Once the lockfile exists on the checked-out commit, replace `npm install` with `npm ci` for the clean/reproducible dependency-install step. `npm run check` runs lint, strict type checking, deterministic Vitest execution, and a production build.
+That development path is **not sufficient for a release**. Before tagging 2.0.12, generate/review/commit the lockfile locally or with the **Frontend Lockfile Bootstrap** workflow, then verify reproducibly:
+
+```bash
+cd frontend
+npm ci --ignore-scripts
+npm run check
+```
+
+Normal Frontend CI is read-only and intentionally fails when the lockfile is absent. `npm run check` runs lint, strict type checking, deterministic Vitest execution, and a production build.
 
 Vitest tests cover pure utilities and state/storage edge cases. New regression-prone logic should be moved into testable functions rather than buried in event handlers.
 
@@ -42,7 +60,7 @@ Every fixed bug should receive a test at the lowest layer that reproduces it rel
 
 ## Determinism
 
-Use fictional fixtures, controlled clocks where time boundaries matter, explicit locales/currencies, and disposable databases. Tests must not require production accounts, SMTP credentials, or internet services.
+Use fictional fixtures, controlled clocks where time boundaries matter, explicit locales/currencies, and disposable databases. Tests must not require production accounts, SMTP credentials, or internet services after dependencies/artifacts are resolved.
 
 ## Accessibility review
 
@@ -52,9 +70,10 @@ Automated scanning is useful but insufficient. Before stable release, manually v
 
 Run dependency/security automation and review authentication/authorization-sensitive changes manually. Secret scanning should be enabled at the repository/host level where available. Never paste real credentials into test fixtures.
 
-## Current limitations
+## Current 2.0.12 limitations
 
 - Browser-level E2E automation is not yet committed, so primary web journeys still require a documented manual smoke pass in addition to automated frontend/backend checks.
-- A committed frontend transitive lockfile is still required before `npm ci` can become the canonical clean-checkout command.
+- `frontend/package-lock.json` is still required before Frontend CI and the tagged release workflow can become green/reproducible.
+- Final successful CI/security status and clean runtime/restore/accessibility evidence must be observed rather than inferred from workflow/source presence.
 
-These limitations are tracked in `ROADMAP.md` and `what_changed.md` rather than hidden.
+These limitations are tracked in `ROADMAP.md`, `docs/releases/2.0.12.md`, and `what_changed.md` rather than hidden.
