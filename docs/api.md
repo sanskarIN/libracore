@@ -8,6 +8,17 @@ LibraCore exposes JSON REST endpoints under `/api`. Authenticated requests send 
 - `GET /api/auth/me` — current identity.
 - `POST /api/auth/logout` — revoke current session.
 
+## Staff account administration
+
+Administrator-only staff identity operations live under `/api/admin/users`:
+
+- `GET /api/admin/users` — bounded staff-account list, optionally filtered by `ADMIN` or `LIBRARIAN` role.
+- `POST /api/admin/users` — create an administrator or librarian account with a validated password.
+- `PATCH /api/admin/users/{userId}/enabled` — enable or disable staff access subject to server safeguards.
+- `POST /api/admin/users/{userId}/password` — reset a staff password and revoke that account's active sessions.
+
+The web client exposes these operations only to administrators, but the backend role checks and account invariants are authoritative.
+
 ## Catalog
 
 The catalog module exposes branch/shelf discovery, searchable/paginated books, book detail, physical-copy creation/update, and barcode/QR/accession lookup. Staff mutations require staff roles; authenticated members can use allowed catalog reads.
