@@ -7,7 +7,7 @@ export class ApiRequestError extends Error {
   readonly status: number
   readonly code: string
   readonly fieldErrors: Record<string, string>
-  readonly correlationId?: string
+  readonly correlationId: string | undefined
 
   constructor(status: number, payload: ApiErrorPayload) {
     super(payload.message || `Request failed with status ${status}`)
@@ -39,10 +39,11 @@ export class ApiClient {
   }
 
   async post<T>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>(path, {
-      method: 'POST',
-      body: body === undefined ? undefined : JSON.stringify(body),
-    })
+    const init: RequestInit = { method: 'POST' }
+    if (body !== undefined) {
+      init.body = JSON.stringify(body)
+    }
+    return this.request<T>(path, init)
   }
 
   async put<T>(path: string, body: unknown): Promise<T> {
