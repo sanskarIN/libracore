@@ -4,6 +4,19 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 ## [Unreleased]
 
+### Release hardening
+
+- Fixed the Frontend Lockfile Bootstrap workflow so the first generated, untracked `frontend/package-lock.json` is detected and committed instead of being missed by `git diff --quiet`.
+- Preserve the verified generated frontend lockfile as a short-lived Actions artifact before the bootstrap commit step.
+- Cancel superseded Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and lockfile-bootstrap runs to reduce stale verification and runner waste.
+- The tagged release workflow now starts the packaged backend JAR against PostgreSQL and requires a healthy `/actuator/health` response before publication.
+- Release documentation now distinguishes workflow/configuration evidence from final release-commit evidence.
+
+### Verification evidence
+
+- A temporary same-repository probe completed CodeQL successfully for both Java/Kotlin and JavaScript/TypeScript.
+- The corrected lockfile bootstrap is being exercised through an observable same-repository probe; no release claim is made until a real npm-generated lockfile is committed to `main`.
+
 ### Release gates
 
 - Commit and review `frontend/package-lock.json` before tagging a release.
