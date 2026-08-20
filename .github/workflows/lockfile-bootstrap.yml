@@ -6,6 +6,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: frontend-lockfile-bootstrap
+  cancel-in-progress: false
+
 jobs:
   generate-and-verify:
     runs-on: ubuntu-latest
