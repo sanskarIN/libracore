@@ -2,6 +2,11 @@ name: Frontend Lockfile Bootstrap
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - automation/lockfile-bootstrap-2
+    paths:
+      - .github/workflows/lockfile-bootstrap.yml
 
 permissions:
   contents: write
