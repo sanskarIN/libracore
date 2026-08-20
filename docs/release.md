@@ -16,14 +16,14 @@ LibraCore does not call a release ready merely because source files exist. A rel
    cd backend
    mvn clean verify
    ```
-6. Require a committed `frontend/package-lock.json`. If it is missing, do **not** tag a release. Generate it locally with the supported Node/npm toolchain or run the repository's **Frontend Lockfile Bootstrap** workflow, review the generated lockfile, and commit it.
+6. Require a committed `frontend/package-lock.json`. If it is missing, do **not** tag a release. Generate it locally with the supported Node/npm toolchain or run the repository's **Frontend Lockfile Bootstrap** workflow, review the generated lockfile, and commit it. The bootstrap workflow must treat both an untracked first lockfile and a modified existing lockfile as changes; it also retains the verified lockfile as a short-lived workflow artifact before attempting the repository commit.
 7. Verify frontend reproducibly:
    ```bash
    cd frontend
-   npm ci --ignore-scripts
+   npm ci --ignore-scripts --no-audit --no-fund
    npm run check
    ```
-8. Start PostgreSQL from an empty disposable volume and start the packaged backend; confirm all Flyway migrations and `/actuator/health`.
+8. Start PostgreSQL from an empty disposable volume and start the **packaged backend JAR**, not only the application from source; confirm all Flyway migrations and `/actuator/health`.
 9. Perform the primary-role smoke journeys documented in `docs/testing.md`.
 10. Perform the manual accessibility checks in `docs/accessibility.md`.
 11. Run dependency/static-security automation and review failures.
@@ -51,18 +51,27 @@ The release workflow verifies that the pushed tag, `backend/pom.xml`, and `front
 
 `.github/workflows/release.yml` intentionally refuses to publish when the frontend lockfile is absent. It also:
 
-- runs the backend Maven verification against PostgreSQL;
-- validates tag/manifest version synchronization;
-- installs frontend dependencies through `npm ci`;
+- validates the release tag against the executable manifests before expensive build work;
+- runs backend Maven verification against PostgreSQL;
+- starts the packaged backend JAR produced by the build;
+- verifies the packaged service reaches `/actuator/health` successfully against PostgreSQL before publication;
+- installs frontend dependencies through reproducible `npm ci` with lifecycle scripts disabled;
 - runs the aggregate frontend quality gate;
 - discovers the packaged backend JAR without a hard-coded historical version filename;
 - packages the frontend production build;
 - generates SHA-256 checksums;
-- publishes artifacts from the tagged source.
+- publishes artifacts from the tagged source;
+- always attempts to stop the temporary packaged backend process and prints its log when the release job fails.
+
+## CI freshness
+
+Backend CI, Frontend CI, and the lockfile bootstrap use workflow concurrency so superseded runs do not consume runner capacity or report stale results as the newest verification. Release publication itself remains tag-scoped and is never silently substituted by a branch build.
 
 ## Artifacts
 
 A release may include the backend JAR, frontend production bundle/archive, checksums, and source archives. Artifacts must be produced from the tagged commit by the release workflow or another documented reproducible process.
+
+The lockfile bootstrap's `frontend-package-lock` artifact is a short-lived verification/recovery aid, **not** a release artifact. The canonical dependency state remains the reviewed `frontend/package-lock.json` committed to the release source tree.
 
 ## Migration and rollback
 
