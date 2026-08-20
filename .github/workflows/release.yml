@@ -35,6 +35,8 @@ jobs:
     steps:
       - name: Checkout tagged source
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Require committed frontend lockfile
         run: |
