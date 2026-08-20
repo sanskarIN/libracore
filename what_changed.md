@@ -3,7 +3,7 @@
 **Audit/update date:** 2026-08-20  
 **Repository:** `sanskarIN/libracore`  
 **Branch:** `main`  
-**Latest clean `main` checkpoint immediately before this handoff update:** `06547fad4b7722b4fe3ebe049492a22e5867331c`  
+**Latest clean `main` checkpoint immediately before this handoff update:** `9b57de9ebe65684ffbb5ab191dac4c286fe10ea2`  
 **Commit identity:** `Sanskar <sanskarin@outlook.in>`
 
 This file is the canonical continuation record for LibraCore. Read it before adding more features. It records completed implementation, verification evidence, temporary diagnostic work, source-side hardening, dependency/update decisions, and the exact gates that still prevent `v2.0.12` from being declared release-ready.
@@ -218,6 +218,7 @@ Commits:
 - `d140b639` — `docs: refresh 2.0.12 hardening evidence`
 - `0500d7b3` — `docs: record 2.0.12 CI hardening`
 - `06547fad` — `docs: record current GitHub Actions runtime lines`
+- `9b57de9e` — `docs: align 2.0.12 notes with action upgrades`
 - this handoff update — canonical continuation truth
 
 Updated documentation now explains:
