@@ -24,10 +24,10 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 - [x] Preserve generated lockfile artifacts even when later frontend verification fails.
 - [x] Cancel superseded Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and lockfile-bootstrap runs.
 - [x] Move core GitHub Actions to the current supported Node 24 runtime lines used by this repository.
-- [x] Exercise the hosted lockfile bootstrap far enough to prove npm lockfile generation and `npm ci` succeed, then fix the strict TypeScript defect it exposed.
-- [ ] Generate, review, and commit the synchronized `frontend/package-lock.json` using the supported Node/npm toolchain after the complete frontend quality gate passes.
-- [ ] Observe successful backend/frontend/version/security CI on the final 2.0.12 commit and fix every failure.
-- [ ] Run clean PostgreSQL migration/startup/health verification and a backup/restore drill.
+- [x] Exercise hosted lockfile generation, isolate and fix the strict frontend TypeScript defect, then pass lint, strict typecheck, tests, and production build.
+- [x] Generate, review, and commit the synchronized npm-generated `frontend/package-lock.json` (`89d1c833`).
+- [x] Add an automated disposable PostgreSQL Recovery Drill covering packaged migrations/startup, logical backup, checksum verification, restore, restored-data/schema checks, and packaged health on the restored database.
+- [ ] Observe successful Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill on the current 2.0.12 verification source; fix every failure.
 - [ ] Complete role-based browser smoke testing and accessibility evidence.
 - [ ] Enable and verify `main` branch protection/rules using the stable required-check names.
 - [ ] Tag `v2.0.12` only after every release gate above is closed.
@@ -40,7 +40,7 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 - [ ] Add rate-limit guidance/reference configuration for internet-facing deployments.
 - [ ] Add import/export edge-case and spreadsheet-formula safety regression coverage.
 - [ ] Add repeatable performance fixtures for large catalog/member/circulation datasets.
-- [ ] Add restore-drill automation against disposable databases.
+- [x] Add restore-drill automation against disposable databases.
 
 ## 2.2.x — Product maturity
 
