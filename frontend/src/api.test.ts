@@ -11,4 +11,15 @@ describe('API helpers', () => {
     expect(readableError(error)).toBe('Invalid request.')
     expect(error.code).toBe('validation_failed')
   })
+
+  it('preserves correlation identifiers only when the API supplies them', () => {
+    const withoutCorrelation = new ApiRequestError(500, { message: 'Request failed.' })
+    const withCorrelation = new ApiRequestError(500, {
+      message: 'Request failed.',
+      correlationId: 'corr-123',
+    })
+
+    expect(withoutCorrelation.correlationId).toBeUndefined()
+    expect(withCorrelation.correlationId).toBe('corr-123')
+  })
 })
