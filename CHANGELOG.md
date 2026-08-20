@@ -7,22 +7,30 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 ### Release hardening
 
 - Fixed the Frontend Lockfile Bootstrap workflow so the first generated, untracked `frontend/package-lock.json` is detected and committed instead of being missed by `git diff --quiet`.
-- Preserve the verified generated frontend lockfile as a short-lived Actions artifact before the bootstrap commit step.
+- Preserve the generated frontend lockfile as a short-lived Actions artifact before later verification so a failing quality gate does not discard useful dependency-state evidence.
 - Cancel superseded Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and lockfile-bootstrap runs to reduce stale verification and runner waste.
 - The tagged release workflow now starts the packaged backend JAR against PostgreSQL and requires a healthy `/actuator/health` response before publication.
 - Upgraded supported GitHub Actions runtime lines across the repository: `actions/checkout@v7`, `actions/setup-node@v7`, `actions/upload-artifact@v7`, `actions/dependency-review-action@v5`, and `softprops/action-gh-release@v3`; `actions/setup-java@v5` remains on its stable production line.
+- Disabled persisted checkout credentials in read-only Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and release source checkout; the lockfile bootstrap intentionally retains credentials because it must push the generated lockfile.
 - Closed the superseded GitHub Actions Dependabot PRs after absorbing their supported upgrades directly into the hardened workflows.
-- Release documentation now distinguishes workflow/configuration evidence from final release-commit evidence.
+- Deferred TypeScript 7 and Node 26 type-definition major upgrades from the 2.0.12 stabilization line while continuing to allow normal non-major dependency updates.
+- Release documentation and the roadmap now distinguish workflow/configuration evidence from final release-commit evidence.
+
+### Fixed
+
+- Fixed strict `exactOptionalPropertyTypes` failures in the frontend API client by representing the optional correlation ID explicitly as `string | undefined` and omitting POST request bodies instead of assigning `body: undefined`.
+- Added API regression coverage for optional correlation identifiers.
 
 ### Verification evidence
 
 - A temporary same-repository probe completed CodeQL successfully for both Java/Kotlin and JavaScript/TypeScript.
-- A corrected lockfile-bootstrap probe created an observable workflow run, but its GitHub-hosted job remained queued during the diagnostic window; no release claim is made until a real npm-generated lockfile is committed to `main`.
+- The hosted lockfile bootstrap successfully generated the npm lockfile and completed `npm ci`; the first executable frontend failure was then isolated to two strict TypeScript errors in `frontend/src/api.ts`.
+- Those strict TypeScript errors are fixed on `main`, and the failed bootstrap job has been re-run against the corrected source to continue the full lint/typecheck/test/build gate.
 - Frontend dependency PRs remain intentionally unmerged until a committed lockfile enables reproducible frontend CI and dependency review against the exact resolved graph.
 
 ### Release gates
 
-- Commit and review `frontend/package-lock.json` before tagging a release.
+- Commit and review `frontend/package-lock.json` after the full frontend quality gate passes.
 - Observe successful backend/frontend/version/security CI on the final release-candidate commit.
 - Complete clean PostgreSQL migration/startup, backup/restore, role smoke, and accessibility evidence.
 - Enable `main` branch protection after stable required-check names are confirmed.
