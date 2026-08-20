@@ -36,17 +36,6 @@ jobs:
       - name: Checkout tagged source
         uses: actions/checkout@v5
 
-      - name: Set up Java 25
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '25'
-          cache: maven
-
-      - name: Verify and package backend
-        working-directory: backend
-        run: mvn -B --no-transfer-progress clean verify
-
       - name: Require committed frontend lockfile
         run: |
           if [ ! -f frontend/package-lock.json ]; then
@@ -64,9 +53,35 @@ jobs:
       - name: Verify release version
         run: node scripts/check-version.mjs "${GITHUB_REF_NAME}"
 
+      - name: Set up Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Verify and package backend
+        working-directory: backend
+        run: mvn -B --no-transfer-progress clean verify
+
+      - name: Start packaged backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          backend_jar="$(find backend/target -maxdepth 1 -type f -name 'libracore-backend-*.jar' ! -name '*.original' | head -n 1)"
+          if [[ -z "$backend_jar" ]]; then
+            echo "No packaged LibraCore backend JAR was found." >&2
+            exit 1
+          fi
+          java -jar "$backend_jar" > /tmp/libracore-release-backend.log 2>&1 &
+          echo $! > /tmp/libracore-release-backend.pid
+
+      - name: Verify packaged backend health
+        run: curl --fail --silent --show-error --retry 20 --retry-all-errors --retry-delay 2 http://localhost:8080/actuator/health
+
       - name: Install frontend dependencies reproducibly
         working-directory: frontend
-        run: npm ci --ignore-scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Verify frontend
         working-directory: frontend
@@ -97,3 +112,14 @@ jobs:
             libracore-backend-${{ github.ref_name }}.jar
             libracore-web-${{ github.ref_name }}.tar.gz
             SHA256SUMS.txt
+
+      - name: Stop packaged backend
+        if: always()
+        run: |
+          if [ -f /tmp/libracore-release-backend.pid ]; then
+            kill "$(cat /tmp/libracore-release-backend.pid)" 2>/dev/null || true
+          fi
+
+      - name: Print packaged backend log on failure
+        if: failure()
+        run: cat /tmp/libracore-release-backend.log || true
