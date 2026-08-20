@@ -1,0 +1,208 @@
+name: Recovery Drill
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'backend/pom.xml'
+      - 'backend/src/main/resources/db/migration/**'
+      - 'scripts/**'
+      - '.github/workflows/recovery-drill.yml'
+  schedule:
+    - cron: '41 4 * * 3'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recovery-drill-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: libracore_source
+          POSTGRES_USER: libracore
+          POSTGRES_PASSWORD: test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U libracore -d libracore_source"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_USERNAME: libracore
+      DB_PASSWORD: test-password
+      APP_NOTIFICATION_MODE: MOCK
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: libracore
+      PGPASSWORD: test-password
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Package backend
+        working-directory: backend
+        run: mvn -B --no-transfer-progress -DskipTests clean package
+
+      - name: Locate packaged backend
+        shell: bash
+        run: |
+          set -euo pipefail
+          backend_jar="$(find backend/target -maxdepth 1 -type f -name 'libracore-backend-*.jar' ! -name '*.original' | head -n 1)"
+          if [[ -z "$backend_jar" ]]; then
+            echo "No packaged LibraCore backend JAR was found." >&2
+            exit 1
+          fi
+          echo "BACKEND_JAR=$backend_jar" >> "$GITHUB_ENV"
+
+      - name: Migrate disposable source database
+        shell: bash
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/libracore_source
+        run: |
+          set -euo pipefail
+          java -jar "$BACKEND_JAR" > /tmp/libracore-recovery-source.log 2>&1 &
+          echo $! > /tmp/libracore-recovery-source.pid
+          curl --fail --silent --show-error --retry 20 --retry-all-errors --retry-delay 2 http://localhost:8080/actuator/health
+          kill "$(cat /tmp/libracore-recovery-source.pid)" 2>/dev/null || true
+          rm -f /tmp/libracore-recovery-source.pid
+
+      - name: Seed fictional recovery marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network host \
+            -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD \
+            postgres:18 \
+            psql --set ON_ERROR_STOP=1 --dbname libracore_source --command \
+            "CREATE TABLE recovery_drill_marker (id integer PRIMARY KEY, marker text NOT NULL); INSERT INTO recovery_drill_marker VALUES (1, 'libracore-recovery-ok');"
+
+      - name: Capture source migration count
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_migrations="$(docker run --rm --network host \
+            -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD \
+            postgres:18 \
+            psql --tuples-only --no-align --dbname libracore_source --command \
+            'SELECT count(*) FROM flyway_schema_history;')"
+          source_migrations="$(printf '%s' "$source_migrations" | tr -d '[:space:]')"
+          if [[ -z "$source_migrations" || "$source_migrations" == "0" ]]; then
+            echo "Flyway migration history is unexpectedly empty." >&2
+            exit 1
+          fi
+          echo "SOURCE_MIGRATION_COUNT=$source_migrations" >> "$GITHUB_ENV"
+
+      - name: Create logical backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .recovery
+          docker run --rm --network host \
+            -v "$PWD:/workspace" -w /workspace \
+            -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD \
+            -e PGDATABASE=libracore_source \
+            postgres:18 \
+            bash scripts/backup.sh /workspace/.recovery/libracore-source.dump
+
+      - name: Create empty restore target
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network host \
+            -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD \
+            postgres:18 \
+            psql --set ON_ERROR_STOP=1 --dbname postgres --command \
+            'CREATE DATABASE libracore_restore;'
+
+      - name: Restore logical backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network host \
+            -v "$PWD:/workspace" -w /workspace \
+            -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD \
+            -e PGDATABASE=libracore_restore \
+            -e LIBRACORE_ALLOW_RESTORE=yes \
+            postgres:18 \
+            bash scripts/restore.sh /workspace/.recovery/libracore-source.dump
+
+      - name: Verify restored schema and marker
+        shell: bash
+        run: |
+          set -euo pipefail
+          restored_migrations="$(docker run --rm --network host \
+            -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD \
+            postgres:18 \
+            psql --tuples-only --no-align --dbname libracore_restore --command \
+            'SELECT count(*) FROM flyway_schema_history;')"
+          restored_migrations="$(printf '%s' "$restored_migrations" | tr -d '[:space:]')"
+          if [[ "$restored_migrations" != "$SOURCE_MIGRATION_COUNT" ]]; then
+            echo "Migration history mismatch after restore: source=$SOURCE_MIGRATION_COUNT restored=$restored_migrations" >&2
+            exit 1
+          fi
+
+          marker="$(docker run --rm --network host \
+            -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD \
+            postgres:18 \
+            psql --tuples-only --no-align --dbname libracore_restore --command \
+            'SELECT marker FROM recovery_drill_marker WHERE id = 1;')"
+          marker="$(printf '%s' "$marker" | tr -d '\r\n')"
+          if [[ "$marker" != "libracore-recovery-ok" ]]; then
+            echo "Recovery marker mismatch after restore." >&2
+            exit 1
+          fi
+
+      - name: Start packaged backend on restored database
+        shell: bash
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/libracore_restore
+        run: |
+          set -euo pipefail
+          java -jar "$BACKEND_JAR" > /tmp/libracore-recovery-restored.log 2>&1 &
+          echo $! > /tmp/libracore-recovery-restored.pid
+          curl --fail --silent --show-error --retry 20 --retry-all-errors --retry-delay 2 http://localhost:8080/actuator/health
+
+      - name: Stop recovery backend
+        if: always()
+        shell: bash
+        run: |
+          if [ -f /tmp/libracore-recovery-source.pid ]; then
+            kill "$(cat /tmp/libracore-recovery-source.pid)" 2>/dev/null || true
+          fi
+          if [ -f /tmp/libracore-recovery-restored.pid ]; then
+            kill "$(cat /tmp/libracore-recovery-restored.pid)" 2>/dev/null || true
+          fi
+
+      - name: Print backend logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          echo '--- source database backend log ---'
+          cat /tmp/libracore-recovery-source.log 2>/dev/null || true
+          echo '--- restored database backend log ---'
+          cat /tmp/libracore-recovery-restored.log 2>/dev/null || true
+
+      - name: Remove disposable backup
+        if: always()
+        run: rm -rf .recovery
