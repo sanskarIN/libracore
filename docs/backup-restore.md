@@ -18,7 +18,32 @@ A usable backup process records at least:
 
 Do not assume a successful `pg_dump` exit means the recovery plan is proven.
 
-## Restore drill
+## Automated disposable Recovery Drill
+
+`.github/workflows/recovery-drill.yml` provides a repeatable safety net for the repository backup/restore path. It is intentionally isolated from valuable data and uses fictional marker content only.
+
+The workflow:
+
+1. starts an ephemeral PostgreSQL 18 service;
+2. packages the LibraCore backend;
+3. starts that packaged JAR against a disposable source database so Flyway creates the real application schema;
+4. requires `/actuator/health` to become healthy;
+5. writes a fictional recovery marker into the disposable database;
+6. records the Flyway migration-history count;
+7. invokes the repository's actual `scripts/backup.sh` with PostgreSQL 18 client tools;
+8. creates a second empty restore target;
+9. invokes the actual destructive-guarded `scripts/restore.sh` with `LIBRACORE_ALLOW_RESTORE=yes` only for that disposable target;
+10. verifies the backup checksum, restored migration-history count, and fictional marker value;
+11. starts the same packaged backend against the restored database and requires `/actuator/health` again;
+12. removes the temporary logical dump regardless of success/failure.
+
+The workflow runs on relevant migration/recovery-script changes, can be invoked manually, and has a scheduled recurring drill. It does not upload database dumps as artifacts.
+
+Passing this workflow demonstrates the repository's logical backup/restore mechanism and application startup against a restored schema. It does **not** replace an operator's environment-specific recovery exercise, encryption/key validation, RPO/RTO measurement, or representative production-like data checks.
+
+## Manual restore drill
+
+For an environment-specific drill:
 
 1. Choose an isolated disposable PostgreSQL instance.
 2. Verify target credentials/database name and ensure it is not production.
