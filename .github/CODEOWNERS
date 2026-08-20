@@ -1,0 +1,21 @@
+# Default ownership for LibraCore.
+* @sanskarIN
+
+# Release, CI, dependency, and repository-governance controls.
+/.github/ @sanskarIN
+
+# Security-sensitive application configuration and policy.
+/SECURITY.md @sanskarIN
+/PRIVACY.md @sanskarIN
+/THREAT_MODEL.md @sanskarIN
+/backend/src/main/java/com/sanskar/libracore/security/ @sanskarIN
+/backend/src/main/resources/application.yml @sanskarIN
+
+# Database history must receive explicit owner review.
+/backend/src/main/resources/db/migration/ @sanskarIN
+
+# Recovery tooling can affect durable data and release evidence.
+/scripts/backup.sh @sanskarIN
+/scripts/restore.sh @sanskarIN
+/docs/backup-restore.md @sanskarIN
+/docs/release.md @sanskarIN
