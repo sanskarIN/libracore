@@ -25,23 +25,15 @@ This must compile the application, run unit/integration tests configured by Mave
 
 ### Frontend
 
-For local development on a commit that does not yet contain `frontend/package-lock.json`:
+The npm-generated `frontend/package-lock.json` is committed. Clean development, CI, and release verification therefore use reproducible installation:
 
 ```bash
 cd frontend
-npm install
+npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 ```
 
-That development path is **not sufficient for a release**. Before tagging 2.0.12, generate/review/commit the lockfile locally or with the **Frontend Lockfile Bootstrap** workflow, then verify reproducibly:
-
-```bash
-cd frontend
-npm ci --ignore-scripts
-npm run check
-```
-
-Normal Frontend CI is read-only and intentionally fails when the lockfile is absent. `npm run check` runs lint, strict type checking, deterministic Vitest execution, and a production build.
+The hosted lockfile-bootstrap closure for 2.0.12 successfully completed lockfile generation, `npm ci`, lint, strict type checking, deterministic Vitest execution, and the production build after fixing the strict API typing defect it exposed. Normal Frontend CI is read-only and verifies the committed lockfile rather than regenerating dependency resolution.
 
 Vitest tests cover pure utilities and state/storage edge cases. New regression-prone logic should be moved into testable functions rather than buried in event handlers.
 
@@ -58,6 +50,8 @@ Vitest tests cover pure utilities and state/storage edge cases. New regression-p
 
 Every fixed bug should receive a test at the lowest layer that reproduces it reliably. Avoid tests coupled to implementation details when a public behavior/invariant can be asserted instead.
 
+The 2.0.12 strict API typing correction added regression coverage for optional API correlation identifiers. The TypeScript compiler remains configured with `exactOptionalPropertyTypes` so request/response optionality mistakes fail the quality gate instead of being silently widened.
+
 ## Determinism
 
 Use fictional fixtures, controlled clocks where time boundaries matter, explicit locales/currencies, and disposable databases. Tests must not require production accounts, SMTP credentials, or internet services after dependencies/artifacts are resolved.
@@ -70,10 +64,13 @@ Automated scanning is useful but insufficient. Before stable release, manually v
 
 Run dependency/security automation and review authentication/authorization-sensitive changes manually. Secret scanning should be enabled at the repository/host level where available. Never paste real credentials into test fixtures.
 
+Read-only verification workflows disable persisted checkout credentials after source retrieval. The explicit lockfile bootstrap is the exception because it may need to push an intentional generated lockfile commit.
+
 ## Current 2.0.12 limitations
 
 - Browser-level E2E automation is not yet committed, so primary web journeys still require a documented manual smoke pass in addition to automated frontend/backend checks.
-- `frontend/package-lock.json` is still required before Frontend CI and the tagged release workflow can become green/reproducible.
-- Final successful CI/security status and clean runtime/restore/accessibility evidence must be observed rather than inferred from workflow/source presence.
+- Final successful Backend CI, Frontend CI, Version Sync, CodeQL, and Dependency Review evidence is being verified against the intended release-candidate source and must be observed rather than inferred.
+- Clean backup/restore and accessibility evidence still need to be recorded.
+- `main` branch protection/rules still need to be enabled after stable required-check names are confirmed.
 
 These limitations are tracked in `ROADMAP.md`, `docs/releases/2.0.12.md`, and `what_changed.md` rather than hidden.
