@@ -1,497 +1,495 @@
-# LibraCore — 2.0.12 Final Engineering Handoff
+# LibraCore — 2.0.12 Engineering Handoff
 
 **Audit/update date:** 2026-08-20  
 **Repository:** `sanskarIN/libracore`  
 **Branch:** `main`  
-**Latest clean `main` checkpoint immediately before this handoff update:** `9b57de9ebe65684ffbb5ab191dac4c286fe10ea2`  
-**Commit identity:** `Sanskar <sanskarin@outlook.in>`
+**Latest `main` checkpoint immediately before this handoff update:** `1691c5b711deca6f6f2d5d456ffcb84360c6a8f5`  
+**Commit identity used for project commits:** `Sanskar <sanskarin@outlook.in>`
 
-This file is the canonical continuation record for LibraCore. Read it before adding more features. It records completed implementation, verification evidence, temporary diagnostic work, source-side hardening, dependency/update decisions, and the exact gates that still prevent `v2.0.12` from being declared release-ready.
+This is the canonical continuation record for LibraCore. Read this file before starting another feature pass. The 2.0.12 source is feature-complete enough that release evidence and repository enforcement take priority over unrelated feature expansion.
 
-## 2026-08-20 continuation — latest result
+## Current 2.0.12 status
 
-This continuation intentionally stayed on the explicit 2.0.12 release-closure path instead of adding unrelated product features.
+LibraCore remains a **2.0.12 release candidate**, not a published stable release.
 
-Latest observable source/repository state before this handoff update:
+Current verified repository facts:
 
 - backend Maven version: `2.0.12`;
 - frontend npm version: `2.0.12`;
-- `frontend/package-lock.json`: **still absent** at the latest observable check;
-- `main` branch protection: **disabled** (`protected: false`; required checks are not enforced);
-- permanent Frontend Lockfile Bootstrap workflow: restored to **manual `workflow_dispatch` only** after diagnostics;
-- both temporary lockfile probe PRs are **closed without merge**;
-- temporary probe branches `automation/lockfile-bootstrap-2` and `automation/lockfile-bootstrap-3` were force-aligned to the clean `main` checkpoint so they no longer contain divergent workflow definitions;
-- CodeQL was successfully observed on a temporary same-repository probe for both Java/Kotlin and JavaScript/TypeScript;
-- a corrected lockfile-bootstrap run was successfully created and became observable, but its GitHub-hosted job remained queued during this continuation and therefore produced no lockfile execution evidence;
-- the repository's GitHub Actions definitions were upgraded to current supported Node 24 action lines where applicable;
-- the GitHub Actions Dependabot PRs that became redundant after those direct workflow upgrades were closed without merge;
-- only frontend dependency-update PRs remain open, and they are intentionally not merged until the lockfile/reproducible frontend verification gate exists;
-- GitHub's public status page reported Actions operational during the queue observation, so no platform-wide Actions outage was used as an explanation for the repository-specific queued job;
-- the local execution environment still could not reach the npm registry reliably, so no dependency lock was generated locally and no lockfile was fabricated.
+- `frontend/package-lock.json`: **present and committed**;
+- lockfile commit: `89d1c833491d336626830baa5a69eb038c26e46f` — `build: lock frontend dependencies for 2.0.12`;
+- the hosted lockfile-bootstrap closure completed real npm lockfile generation, `npm ci`, lint, strict TypeScript checking, Vitest, production build, artifact upload, and the lockfile commit successfully;
+- the strict TypeScript defect exposed by the first hosted bootstrap execution was fixed without weakening compiler settings;
+- an automated disposable PostgreSQL Recovery Drill is committed;
+- `.github/CODEOWNERS` is committed for repository-wide and high-risk-path ownership;
+- core read-only CI/release checkout steps do not persist Git credentials;
+- TypeScript 7 and Node 26 type-definition major updates are intentionally deferred from the stabilization line;
+- `main` branch protection remains **disabled** in observable GitHub metadata;
+- the connected GitHub integration does not expose branch-protection/ruleset mutation, so that host-level enforcement cannot be enabled from this chat;
+- `v2.0.12` has **not** been tagged or published.
 
-**Do not tag or publish `v2.0.12` yet.**
+**Do not create `v2.0.12` until the remaining gates in this document are closed.**
 
-## Critical lockfile-bootstrap bug found and fixed
+## Major blocker closed: real frontend dependency lock
 
-The most important engineering finding in this continuation was a real bug in `.github/workflows/lockfile-bootstrap.yml`.
+The earlier release blocker was the absence of `frontend/package-lock.json`.
 
-The original commit step used:
+### Root cause found
+
+The original Frontend Lockfile Bootstrap commit step checked:
 
 ```bash
 git diff --quiet -- frontend/package-lock.json
 ```
 
-That command does not report an untracked file. Because `frontend/package-lock.json` did not exist yet, a successful first-time npm generation could leave the file untracked and the workflow could incorrectly conclude that the lockfile was already synchronized. That explains why earlier bootstrap attempts could fail to publish a newly generated lockfile even if npm generation itself succeeded.
+That does not report an untracked first-time file, so a newly generated lockfile could be silently missed.
 
-The permanent workflow now checks:
+The workflow now uses:
 
 ```bash
 git status --porcelain -- frontend/package-lock.json
 ```
 
-This detects both the first untracked lockfile and later modifications.
+which detects both an untracked first lockfile and later modifications.
 
-Permanent lockfile-bootstrap hardening commits:
+Hardening commits retained:
 
 - `2e609a43` — `ci: detect untracked frontend lockfile`
 - `702d0c8a` — `ci: serialize frontend lockfile bootstrap`
 - `21b43644` — `ci: preserve verified frontend lockfile artifact`
 - `caa26efd` — `ci: cancel stale lockfile bootstrap runs`
 - `e582fdc1` — `ci: restore hardened manual lockfile bootstrap`
-- `ee0a75e7` — `ci: upgrade lockfile bootstrap actions`
+- `8f7f4aa2` — `ci: preserve generated lockfile on verification failure`
 
-The hardened workflow now:
+The permanent bootstrap is restored to maintainer-only `workflow_dispatch` operation. It:
 
-- checks out `main` explicitly with `actions/checkout@v7`;
-- uses Node.js 24 through `actions/setup-node@v7`;
-- generates the lockfile with `npm install --package-lock-only --ignore-scripts --no-audit --no-fund`;
-- verifies installation with `npm ci --ignore-scripts --no-audit --no-fund`;
-- runs the complete frontend quality command `npm run check`;
-- uploads the verified lockfile through `actions/upload-artifact@v7` as a short-lived `frontend-package-lock` artifact before attempting the repository commit;
-- detects untracked or modified lockfile state correctly;
-- commits with `Sanskar <sanskarin@outlook.in>`;
-- pushes only the generated `frontend/package-lock.json` to `main` when it changed;
-- uses workflow concurrency with stale-run cancellation;
-- is permanently restored to `workflow_dispatch` only after the diagnostic probes.
+1. checks out `main`;
+2. uses Node.js 24;
+3. generates the npm lockfile with lifecycle scripts/audit/funding network work disabled;
+4. installs exactly from that lockfile with `npm ci`;
+5. preserves the generated lockfile as a short-lived Actions artifact before later verification;
+6. runs the full frontend `npm run check` quality gate;
+7. commits only the generated lockfile when it changed;
+8. uses `Sanskar <sanskarin@outlook.in>` for that commit;
+9. cancels superseded bootstrap runs.
 
-The uploaded lockfile artifact is a recovery/inspection aid only. The canonical release dependency state remains the reviewed `frontend/package-lock.json` committed in the repository.
+The artifact is only a diagnostic/recovery aid. The canonical dependency state is the reviewed file committed in Git.
 
-## Temporary lockfile diagnostics and cleanup
+## Hosted frontend failure found and fixed
 
-Several temporary source-controlled probes were used because the connected GitHub interface did not expose the normal manual `workflow_dispatch` invocation for this workflow.
+The first executable bootstrap run progressed through real lockfile generation and `npm ci`, then failed during strict TypeScript verification in `frontend/src/api.ts`.
 
-### Probe PR #8
+Two `exactOptionalPropertyTypes` problems were exposed:
 
-A temporary branch/PR was used to obtain observable CI/security execution.
+- the API error class assigned an optional `string | undefined` source value to a property declared with optional-property syntax in a way TypeScript 6 correctly rejected;
+- the POST helper explicitly supplied `body: undefined` to `RequestInit` rather than omitting the property.
 
-Result:
+Fix:
 
-- CodeQL workflow run `32351669280` completed successfully;
-- JavaScript/TypeScript CodeQL job: **success**;
-- Java/Kotlin CodeQL job: **success**;
-- PR #8 was closed without merge after capturing the evidence;
-- its branch was later force-aligned to clean `main`.
-
-This proves the CodeQL configuration worked on that probe source. It does **not** replace final check evidence on the exact intended release commit.
-
-### Probe PR #9
-
-A second same-repository probe made the corrected Frontend Lockfile Bootstrap workflow observable.
-
-Observed run:
-
-- workflow: `Frontend Lockfile Bootstrap`;
-- run ID: `32352245167`;
-- run number: `11`;
-- job: `generate-and-verify`;
-- observed state throughout the diagnostic window: **queued**;
-- no steps started;
-- no artifact was produced;
-- no `build: lock frontend dependencies for 2.0.12` commit appeared on `main`;
-- no `frontend/package-lock.json` appeared on `main`.
-
-After the source-side workflow fixes were completed, PR #9 was closed without merge, the permanent workflow trigger was restored to manual-only operation, and its temporary branch was force-aligned to clean `main`.
-
-No diagnostic trigger file or divergent diagnostic workflow definition is intentionally retained in the product source.
-
-## Release workflow hardened further
-
-The tagged release workflow previously verified the backend build but did not prove that the exact packaged JAR could actually start before publication.
+- `correlationId` is represented explicitly as `string | undefined`;
+- POST request initialization only adds the `body` property when a body actually exists;
+- compiler strictness remains enabled.
 
 Commits:
 
+- `bd1005a5` — `fix: satisfy strict optional API request types`
+- `462ab69f` — `test: cover optional API correlation identifiers`
+
+The added regression test verifies both absent and supplied correlation identifiers.
+
+## Frontend verification evidence now obtained
+
+The failed bootstrap job was re-run after the API fix. Although the workflow's final aggregate conclusion was later marked `cancelled` because a newer probe superseded it through concurrency, **every substantive job step had already completed successfully**:
+
+- checkout: success;
+- Node.js setup: success;
+- generate dependency lockfile: success;
+- install locked dependencies with `npm ci`: success;
+- frontend quality gate (`npm run check`): success;
+- lockfile artifact upload: success;
+- lockfile commit: success.
+
+`npm run check` is the aggregate frontend gate and includes:
+
+- linting;
+- strict TypeScript checking;
+- deterministic Vitest execution;
+- production Vite build.
+
+The resulting commit is:
+
+- `89d1c833491d336626830baa5a69eb038c26e46f` — `build: lock frontend dependencies for 2.0.12`
+
+The committed lockfile is npm lockfile format version 3 and records the exact resolved graph for the declared 2.0.12 frontend dependencies.
+
+This closes the former “generate and commit `frontend/package-lock.json`” release blocker.
+
+## Current frontend dependency policy
+
+During release stabilization, avoid unnecessary major toolchain churn.
+
+Changes completed:
+
+- `.github/dependabot.yml` now defers TypeScript semver-major updates;
+- `.github/dependabot.yml` now defers `@types/node` semver-major updates;
+- normal non-major dependency discovery remains enabled.
+
+Commit:
+
+- `662d4e43` — `build: defer frontend toolchain major upgrades`
+
+Dependabot PR disposition:
+
+- PR #5 — TypeScript `6.0.2` → `7.0.2`: closed/deferred until post-release evaluation;
+- PR #7 — `@types/node` `24.13.3` → `26.2.0`: closed/deferred while Node 24 remains the primary CI line;
+- PR #6 — Vitest `4.1.7` → `4.1.10`: remains a non-blocking patch candidate and should not be merged until current release verification is green.
+
+Do not upgrade merely for version-number freshness. Reproducible verification of the exact resolved graph is more important during release closure.
+
+## CI and release workflow hardening completed
+
+### Stale-run cancellation
+
+Core workflows use workflow/ref-scoped concurrency with `cancel-in-progress: true` so an updated PR or branch does not waste runner time on obsolete verification:
+
+- `4130b8e1` — Backend CI;
+- `0d8ad341` — Frontend CI;
+- `ea2256e1` — Version Sync;
+- `1f1f8d42` — CodeQL;
+- `cf7775e0` — Dependency Review;
+- `caa26efd` — Frontend Lockfile Bootstrap.
+
+### Current GitHub Action runtime lines
+
+The repository was modernized to supported current action lines used by this project:
+
+- `actions/checkout@v7`;
+- `actions/setup-node@v7`;
+- `actions/upload-artifact@v7`;
+- `actions/dependency-review-action@v5`;
+- `softprops/action-gh-release@v3`;
+- `actions/setup-java@v5` remains the stable Java setup line;
+- `github/codeql-action@v4` remains the CodeQL line.
+
+Superseded GitHub Actions Dependabot PRs #1–#4 were closed after the changes were integrated directly into the hardened workflow source.
+
+### Least-privilege checkout behavior
+
+Read-only verification paths no longer leave checkout credentials persisted in the repository worktree.
+
+Commits:
+
+- `31549a2d` — Backend CI;
+- `e78d93b5` — Frontend CI;
+- `8b6fa428` — Version Sync;
+- `63a1adf5` — CodeQL;
+- `0afa4a15` — Dependency Review;
+- `58599cf6` — release source checkout.
+
+The lockfile bootstrap is intentionally different because its documented purpose includes pushing the generated lockfile back to `main`.
+
+## Release workflow guarantees now present
+
+The tagged release workflow is fail-closed and currently performs/guards:
+
+- frontend lockfile presence;
+- tag/backend/frontend version agreement;
+- Java 25 setup;
+- Maven verification against PostgreSQL;
+- version-independent packaged backend JAR discovery;
+- startup of the exact packaged JAR intended for release;
+- `/actuator/health` verification against PostgreSQL;
+- reproducible frontend `npm ci`;
+- full frontend quality gate;
+- production frontend packaging;
+- backend artifact collection;
+- SHA-256 checksum generation;
+- GitHub release publication only after the preceding steps;
+- packaged backend cleanup/logging on failure.
+
+Important commits include:
+
+- `3eb17e29` — `ci: harden 2.0.12 release verification`
+- `db3fe2a4` — `ci: fail clearly when release lockfile is absent`
 - `7ee2af63` — `ci: verify packaged backend before release`
-- `34b96960` — `ci: upgrade release actions to Node 24 lines`
 
-The release workflow now:
+Do not use the existence of this workflow as proof that a release passed. The actual tag-triggered run must still be observed after all pre-tag gates close.
 
-- checks out tagged source through `actions/checkout@v7`;
-- refuses to continue if the committed frontend lockfile is absent;
-- sets up Node.js 24 through `actions/setup-node@v7`;
-- validates the pushed release tag against backend/frontend executable manifests before expensive build work;
-- retains `actions/setup-java@v5` as the stable production Java setup line;
-- verifies and packages the backend against PostgreSQL;
-- discovers the packaged backend JAR without a historical hard-coded filename;
-- starts that exact packaged JAR;
-- requires `http://localhost:8080/actuator/health` to become healthy;
-- installs frontend dependencies reproducibly through `npm ci --ignore-scripts --no-audit --no-fund`;
-- runs the full frontend quality gate;
-- packages the production frontend bundle;
-- creates SHA-256 checksums;
-- publishes GitHub release artifacts through `softprops/action-gh-release@v3` only after the preceding gates;
-- always attempts to stop the temporary packaged backend process;
-- prints the packaged backend log when the release job fails.
+## Automated PostgreSQL Recovery Drill added
 
-This strengthens the distinction between “Maven built a JAR” and “the exact artifact intended for publication starts successfully against PostgreSQL.”
+A new workflow is committed:
 
-## CI freshness and runner-efficiency hardening
+- `.github/workflows/recovery-drill.yml`
+- commit `374269e5` — `ci: add automated PostgreSQL recovery drill`
 
-Superseded branch/PR runs should not consume runner capacity or report obsolete results as the newest verification. Concurrency with `cancel-in-progress: true` was therefore added to the core verification workflows.
+The workflow uses disposable PostgreSQL 18 databases and fictional marker content. It:
 
-Commits:
+1. packages the backend;
+2. starts the packaged backend against a disposable source database so Flyway applies the actual schema;
+3. health-checks that source instance;
+4. inserts a fictional recovery marker;
+5. records the Flyway migration-history count;
+6. invokes the repository's real `scripts/backup.sh` through PostgreSQL 18 client tooling;
+7. creates a second empty restore database;
+8. invokes the real `scripts/restore.sh` with the destructive restore opt-in only for that disposable target;
+9. verifies the checksum through the restore script;
+10. compares restored/source migration-history counts;
+11. verifies the fictional marker survived;
+12. starts the packaged backend against the restored database;
+13. requires `/actuator/health` again;
+14. destroys the temporary logical dump even on failure.
 
-- `4130b8e1` — `ci: cancel stale backend verification runs`
-- `0d8ad341` — `ci: cancel stale frontend verification runs`
-- `ea2256e1` — `ci: cancel stale version sync runs`
-- `1f1f8d42` — `ci: cancel stale CodeQL runs`
-- `cf7775e0` — `ci: cancel stale dependency review runs`
-- `caa26efd` — `ci: cancel stale lockfile bootstrap runs`
+The workflow is available manually, runs on relevant migration/recovery changes, and has a recurring scheduled drill. It does **not** upload database dump files as artifacts.
 
-The groups are workflow/ref scoped so an updated PR replaces its own stale verification without conflating unrelated refs.
+Passing this workflow proves the repository logical backup/restore path plus packaged application startup against a restored schema. It does not replace organization-specific RPO/RTO, encryption/key, production-scale, or representative-data recovery exercises.
 
-## GitHub Actions runtime modernization
+Documentation was updated in `docs/backup-restore.md` accordingly.
 
-The repository's core reusable Actions references were reviewed against the currently supported upstream lines and then upgraded directly in the hardened workflow source instead of blindly merging older Dependabot diffs onto pre-hardening workflow files.
+## Code ownership and branch-protection preparation
 
-Current workflow action lines after this continuation:
+Added:
 
-- `actions/checkout@v7` across Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, lockfile bootstrap, and release;
-- `actions/setup-node@v7` in Frontend CI, Version Sync, lockfile bootstrap, and release;
-- `actions/upload-artifact@v7` in the lockfile bootstrap;
-- `actions/dependency-review-action@v5` in Dependency Review;
-- `softprops/action-gh-release@v3` in the tagged release workflow;
-- `actions/setup-java@v5` intentionally retained as the stable production Java setup line;
-- `github/codeql-action@v4` retained for CodeQL initialization/autobuild/analysis.
+- `.github/CODEOWNERS`
+- commit `7939c225` — `governance: add repository code ownership`
 
-Upgrade commits:
+Default ownership is `@sanskarIN`, with explicit ownership entries for:
 
-- `1a771bbb` — `ci: upgrade backend checkout action to v7`
-- `03c04e04` — `ci: upgrade frontend core actions to v7`
-- `945cbd55` — `ci: upgrade version sync actions to v7`
-- `02038a5f` — `ci: upgrade CodeQL checkout action to v7`
-- `007e7a6c` — `ci: upgrade dependency review actions`
-- `ee0a75e7` — `ci: upgrade lockfile bootstrap actions`
-- `34b96960` — `ci: upgrade release actions to Node 24 lines`
+- `.github/` CI/release/governance controls;
+- security policy files;
+- backend security package;
+- application security configuration;
+- Flyway migrations;
+- backup/restore scripts;
+- recovery/release documentation.
 
-A repository search after the sweep returned no remaining references to:
+`docs/branch-protection.md` now recommends requiring code-owner review and Recovery Drill for migration/recovery-sensitive changes.
 
-- `actions/checkout@v5`;
-- `actions/setup-node@v5`;
-- `actions/upload-artifact@v4`;
-- `actions/dependency-review-action@v4`;
-- `softprops/action-gh-release@v2`.
+Important limitation: CODEOWNERS is not enforcement by itself. `main` branch metadata still reports:
 
-Dependabot cleanup after absorbing these upgrades directly:
+- `protected: false`;
+- required-status-check enforcement: off.
 
-- PR #1 (`actions/dependency-review-action` v4 → v5): closed without merge;
-- PR #2 (`actions/setup-node` v5 → v7): closed without merge;
-- PR #3 (`softprops/action-gh-release` v2 → v3): closed without merge;
-- PR #4 (`actions/checkout` v5 → v7): closed without merge.
+The connected GitHub integration does not expose a ruleset/branch-protection mutation action, so this remains a manual repository-host setting after stable check names are confirmed.
 
-Those PRs became redundant because `main` now contains the supported upgrades together with the additional 2.0.12 workflow hardening that was not present on the old Dependabot branch bases.
+## Current consolidated release-verification PR
 
-Frontend dependency PRs intentionally remain open:
+Draft PR #11 is the disposable verification harness:
 
-- PR #5: TypeScript `6.0.2` → `7.0.2`;
-- PR #6: Vitest `4.1.7` → `4.1.10`;
-- PR #7: `@types/node` `24.13.3` → `26.2.0`.
+- title: `ci: verify 2.0.12 release candidate`;
+- branch: `automation/release-verification-2`;
+- base: `main`;
+- must **not** be merged;
+- changes are only temporary marker files/comment-only trigger material.
 
-They are **not** being merged as part of this release-closure pass because `frontend/package-lock.json` is still absent. Changing direct frontend dependencies before the real lockfile exists would enlarge the unresolved dependency surface while reproducible `npm ci` verification is still unavailable. Review those PRs only after the lockfile gate is closed and the exact resolved graph can be tested.
+Current PR verification head after its refresh:
 
-## Documentation refreshed in this continuation
+- `555450dd086b35613bc6e481c8c9562d7f7177f3`
 
-Documentation was updated to match actual source behavior rather than aspirational release claims.
+The PR currently exposes these six workflow runs:
 
-Commits:
+- Recovery Drill — run `32362295920`;
+- CodeQL — run `32362295949`;
+- Frontend CI — run `32362296005`;
+- Dependency Review — run `32362295911`;
+- Version Sync — run `32362295969`;
+- Backend CI — run `32362295973`.
 
-- `a5543b8b` — `docs: document hardened 2.0.12 release verification`
-- `d140b639` — `docs: refresh 2.0.12 hardening evidence`
-- `0500d7b3` — `docs: record 2.0.12 CI hardening`
-- `06547fad` — `docs: record current GitHub Actions runtime lines`
-- `9b57de9e` — `docs: align 2.0.12 notes with action upgrades`
-- this handoff update — canonical continuation truth
+At the time this handoff section was written, those current-source runs were **queued**, not failed. Do not reinterpret queued as pass or failure. Inspect the final job conclusions/logs before updating release status.
 
-Updated documentation now explains:
+Earlier probe evidence retained:
 
-- correct first-lockfile detection;
-- short-lived verified lockfile artifact behavior;
-- reproducible `npm ci` flags;
-- packaged-backend runtime verification before release publication;
-- stale-run cancellation behavior;
-- current supported GitHub Actions runtime lines;
-- the difference between probe evidence and final intended-release-commit evidence;
-- why frontend dependency upgrades remain gated until the dependency lock exists;
-- the continuing lockfile and branch-protection blockers.
+- a previous same-repository CodeQL probe completed successfully for Java/Kotlin and JavaScript/TypeScript;
+- temporary lockfile probe PRs were closed without merge after their diagnostic purpose;
+- old diagnostic branches were force-aligned back to clean `main` rather than left divergent.
 
-## Version 2.0.12 identity
+## Product implementation present
 
-LibraCore source remains explicitly prepared as **2.0.12**:
-
-- `backend/pom.xml`: `2.0.12`;
-- `frontend/package.json`: `2.0.12`;
-- Vite reads frontend package metadata and injects `__APP_VERSION__`;
-- the Settings page displays the build-derived version instead of a duplicated hard-coded value;
-- `scripts/check-version.mjs` validates backend/frontend equality and optionally an expected version/tag;
-- `.github/workflows/version-sync.yml` enforces manifest synchronization;
-- `.github/workflows/release.yml` verifies tag/manifest agreement before release build work.
-
-Relevant preceding commits retained:
-
-- `2b1ce0fd` — `release: set backend version 2.0.12`
-- `774bc10f` — `release: set frontend version 2.0.12`
-- `2464145b` — `build: inject frontend package version`
-- `22b11afc` — `build: type injected application version`
-- `c0d3cfe4` — `release: show build version in settings`
-- `2da8b109` — `build: add cross-manifest version guard`
-- `0f93167e` — `ci: enforce synchronized release versions`
-
-A dependency-free fixture execution previously confirmed the guard behavior for `2.0.12`, but this does not substitute for final full-project verification.
-
-## Product implementation retained
-
-The repository continues to contain the end-to-end LibraCore implementation across:
+The release candidate contains the intended end-to-end LibraCore implementation across:
 
 - Spring Boot modular-monolith backend;
-- PostgreSQL persistence and Flyway migrations V1–V6;
-- books, authors, publishers, categories, branches, shelves, physical copies, accession/barcode/QR lookup, and search;
-- members, account linking, administrator/librarian/member roles, authentication, and authorization;
-- issue, return, renewal, reservations/waitlists, circulation policy, fine assessment and settlement;
-- dashboard, overdue reporting, audit search, CSV import/export, and notification scheduling/gateways;
-- administrator staff-account creation, role filtering, enable/disable, password reset, session revocation, and active-session visibility;
-- responsive React/TypeScript frontend with light/dark/system themes and role-aware navigation;
-- role-complete horizontally scrollable mobile navigation;
-- backup/restore helpers;
-- security/privacy/threat-model/contribution/support documentation;
-- Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, Dependabot, release automation, issue/PR templates, and funding metadata.
+- PostgreSQL persistence and Flyway V1–V6;
+- catalog metadata, branches, shelves, physical copies, accession/barcode/QR lookup, and search;
+- members and account linkage;
+- administrator/librarian/member authentication and authorization;
+- administrator staff-account lifecycle management;
+- issue, return, renewal, reservations/waitlists;
+- circulation policy and fine assessment/settlement;
+- dashboard, overdue reporting, audit search;
+- bounded CSV import/export;
+- notification scheduling and mock/SMTP gateways;
+- responsive React/TypeScript UI with role-aware navigation;
+- light/dark/system themes;
+- mobile navigation coverage for role-authorized routes;
+- backup/restore helpers and automated recovery verification;
+- security/privacy/threat-model/governance documentation;
+- backend/frontend/version/security/dependency/recovery/release automation.
 
-## Important previous final-audit work retained
+## Important previous source fixes retained
 
-The preceding 2.0.12 closure work already completed or fixed:
+Earlier closure work already fixed/completed:
 
-- missing frontend application entry point;
-- circulation, reservation, reports, and settings pages;
+- missing React application entry point;
+- incomplete circulation, reservations, reports, and settings routes;
 - administrator staff-account frontend workflow;
-- strict `exactOptionalPropertyTypes` login-prop defect;
+- login strict optional-property typing;
 - asynchronous staff form reset safety;
 - mobile route truncation;
-- exact direct frontend dependency/tool version pinning;
-- aggregate `npm run check` command;
-- version-independent packaged-backend discovery in Backend CI;
-- release tag/version synchronization enforcement;
-- read-only lockfile-based Frontend CI;
-- security/privacy/threat model;
+- exact direct frontend dependency/tool pinning;
+- aggregate `npm run check`;
+- version-independent backend JAR discovery in CI/release;
+- build-derived Settings version display;
+- cross-manifest version guard;
+- security/privacy/threat-model documentation;
 - contribution/conduct/support policies;
-- issue forms, PR template, Dependabot, CodeQL, dependency review;
+- issue forms, PR template, Dependabot, CodeQL, Dependency Review;
 - architecture/API/setup/development/testing/deployment/backup/accessibility/performance/release/troubleshooting/branch-protection/ADR documentation;
 - exhaustive tracked-file repository reference.
 
-Key preceding commits include:
+## Verification evidence that may be claimed now
 
-- `a998e189` — `ci: make backend startup version independent`
-- `3eb17e29` — `ci: harden 2.0.12 release verification`
-- `db3fe2a4` — `ci: fail clearly when release lockfile is absent`
-- `a9466a5e` — `ci: make frontend verification read-only and reproducible`
-- `5a99a727` — `ci: add explicit frontend lockfile bootstrap`
-- `1dec12af` — README 2.0.12 alignment
-- `628efd02` — 2.0.12 release process
-- `f18fab24` — 2.0.12 roadmap
-- `03b78f4d` — 2.0.12 changelog
-- `84e5a747` — 2.0.12 release-candidate notes
-- `7b66a79b` — exhaustive repository reference refresh
-- `2254688f` — branch-protection/check alignment
-- `84604498` — testing gate alignment
-- `dfea1e3e` — setup/lockfile workflow alignment
-- `220e51d6` — contribution workflow alignment
-- `a434f9df` — sealed earlier 2.0.12 checkpoint
-- `7fc63652` — recorded the preceding lockfile-bootstrap continuation
+The following are supported by observed tool/workflow evidence:
 
-## Verification evidence actually observed
+- backend/frontend manifests identify `2.0.12`;
+- a real npm-generated lockfile is committed;
+- lockfile generation completed successfully on a GitHub-hosted runner;
+- `npm ci` completed successfully with the generated graph;
+- frontend lint completed successfully during the successful bootstrap rerun;
+- strict TypeScript checking completed successfully after the API fix;
+- Vitest completed successfully during the successful rerun;
+- production Vite build completed successfully during the successful rerun;
+- the lockfile commit step completed successfully;
+- earlier CodeQL probe passed both configured language families;
+- core workflow source contains stale-run cancellation and least-privilege checkout changes;
+- the release workflow source contains packaged backend startup/health verification;
+- the Recovery Drill workflow source is syntactically accepted by GitHub Actions and its first run is registered/queued;
+- `main` is currently unprotected.
 
-The following statements are based on concrete repository/tool evidence, not assumptions:
+## Claims that must NOT be made yet
 
-- backend and frontend manifests both identify `2.0.12`;
-- permanent Frontend Lockfile Bootstrap source contains correct untracked-file detection;
-- permanent bootstrap is restored to `workflow_dispatch` only;
-- permanent bootstrap preserves its verified generated lockfile as an Actions artifact before the commit step;
-- Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and bootstrap source now include stale-run cancellation where applicable;
-- release workflow source now starts and health-checks the packaged backend before release publication;
-- current supported action lines have been applied consistently to the affected workflow files;
-- repository searches found no remaining old action references listed in the runtime-modernization section;
-- temporary CodeQL probe completed successfully for both configured language families;
-- the corrected lockfile bootstrap probe created an observable run, but its job never started during the observation window;
-- `frontend/package-lock.json` remained absent at the latest check;
-- branch metadata still reported `main` unprotected;
-- temporary PRs #8 and #9 are closed without merge;
-- temporary branches used for those probes were aligned back to clean `main`;
-- CI Dependabot PRs #1–#4 are closed after their supported upgrades were absorbed directly into `main`;
-- only frontend dependency PRs #5–#7 remain open at the latest PR-state check;
-- local npm access timed out, so it was not used to manufacture dependency metadata.
+Do not claim any of the following until direct evidence exists:
 
-## Claims intentionally not made
+- current PR #11 Backend CI passed;
+- current PR #11 Frontend CI passed;
+- current PR #11 Version Sync passed;
+- current PR #11 CodeQL passed;
+- current PR #11 Dependency Review passed;
+- current PR #11 Recovery Drill passed;
+- final browser role smoke testing is complete;
+- administrator/librarian/member journeys are all release-verified;
+- manual accessibility review is complete;
+- `main` branch protection/code-owner enforcement is active;
+- the tagged release workflow passed for `v2.0.12`;
+- `v2.0.12` is published.
 
-This continuation does **not** claim:
+## Remaining pre-tag release gates
 
-- the corrected lockfile-bootstrap job actually executed to completion;
-- `frontend/package-lock.json` has been generated or reviewed;
-- final Frontend CI passed;
-- final Backend CI passed on the exact intended release commit;
-- final Version Sync passed on the exact intended release commit;
-- final CodeQL passed on the exact intended release commit;
-- Dependency Review passed on the exact intended release commit;
-- any of frontend Dependabot PRs #5–#7 are compatible with the complete application until tested against a real lockfile;
-- a clean disposable PostgreSQL/Flyway V1–V6 release drill is complete;
-- the packaged-backend release workflow itself has been exercised through a real `v2.0.12` tag;
-- representative administrator/librarian/member smoke journeys are complete;
-- browser/accessibility release evidence is complete;
-- an isolated backup/restore drill is complete;
-- `main` branch protection is enabled;
-- `v2.0.12` is release-green, tagged, or published.
+### 1. Finish the current six-check verification matrix
 
-## Remaining 2.0.12 release blockers
-
-### 1. Generate, review, and commit `frontend/package-lock.json`
-
-Preferred hosted path:
-
-GitHub Actions → **Frontend Lockfile Bootstrap** → **Run workflow**.
-
-The permanent workflow is now fixed for first-time untracked lockfiles and uses the current supported Node 24 action lines. After the job runs, review the generated lockfile and resulting commit rather than assuming success from the workflow trigger alone.
-
-Equivalent supported local path:
-
-```bash
-cd frontend
-npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-npm ci --ignore-scripts --no-audit --no-fund
-npm run check
-git add package-lock.json
-git commit -m "build: lock frontend dependencies for 2.0.12"
-git push
-```
-
-Do not hand-write, guess, or synthesize the lockfile.
-
-### 2. Observe final CI/security checks
-
-On the exact intended release commit, observe successful:
+Inspect and require successful conclusions for:
 
 - Backend CI;
-- Frontend CI using the committed lockfile;
+- Frontend CI;
 - Version Sync;
 - CodeQL;
-- applicable dependency/security checks.
+- Dependency Review;
+- Recovery Drill.
 
-Probe success is useful workflow evidence but is not the final release gate.
+If any fails, inspect the exact job log and fix the source/workflow on `main`; do not paper over failures in documentation.
 
-### 3. Review pending frontend dependency updates after the lockfile gate
+### 2. Record role-based browser smoke evidence
 
-Once the dependency lock exists and reproducible CI can execute, review the still-open frontend dependency PRs independently rather than batching major-version changes blindly:
+Verify administrator, librarian, and member journeys, including at minimum:
 
-- PR #5 — TypeScript 7;
-- PR #6 — Vitest 4.1.10;
-- PR #7 — `@types/node` 26.
-
-For each update, regenerate/review the lockfile as appropriate and require lint, typecheck, tests, and production build success before merge. These updates are not prerequisites for publishing 2.0.12 unless a security finding makes one release-blocking.
-
-### 4. Clean database/runtime evidence
-
-Using a clean disposable PostgreSQL database, prove:
-
-- Flyway migrations V1–V6 apply in order;
-- the packaged backend starts;
-- `/actuator/health` is healthy;
-- representative operations work;
-- no migration/startup errors are hidden in logs.
-
-### 5. Role-based smoke evidence
-
-Verify administrator, librarian, and member journeys, including:
-
-- authentication/session behavior;
-- staff-account administration;
-- catalog/copy/member operations;
-- circulation and renewals;
+- sign in/current session/logout;
+- administrator staff-account create/filter/enable-disable/password reset;
+- catalog/search/detail/copy workflows;
+- member administration;
+- issue/return/renew;
 - reservations/waitlists;
 - fines/policy behavior;
 - reports/audit;
-- CSV exchange;
-- responsive role-aware navigation;
-- loading, empty, validation, and error states.
+- CSV import/export with fictional data;
+- responsive navigation;
+- loading/empty/validation/error states.
 
-### 6. Accessibility evidence
+Browser-level E2E automation is a 2.1.x roadmap item, so 2.0.12 still requires recorded manual smoke evidence unless that automation is intentionally brought forward and verified.
 
-Record the manual checks required by `docs/accessibility.md`, including keyboard operation, visible focus, zoom/reflow, reduced motion, and screen-reader behavior.
+### 3. Record manual accessibility evidence
 
-### 7. Backup/restore evidence
+Use `docs/accessibility.md` and record:
 
-Complete an isolated current backup/restore drill and record the result without destructive assumptions about production data.
+- keyboard-only navigation;
+- visible focus;
+- logical focus order;
+- zoom/reflow;
+- reduced-motion behavior;
+- accessible labels/names;
+- non-color-only status meaning;
+- screen-reader landmark/name basics.
 
-### 8. Enable `main` branch protection/rules
+Automated checks do not replace this manual evidence.
 
-After stable check names are green, enable the rules described in `docs/branch-protection.md`.
+### 4. Enable `main` branch protection/ruleset
 
-The connected GitHub interface used in this continuation does not expose branch-protection/ruleset mutation, so this host-level setting was not changed from source commits. Latest branch metadata still reports protection disabled.
+After the exact stable check names are known, enable the policy documented in `docs/branch-protection.md`, including appropriate code-owner review.
 
-## Exact final closure sequence for 2.0.12
+The connected tool cannot perform this host mutation. Do not mark this complete until GitHub branch metadata confirms protection is enabled.
 
-1. Run the corrected Frontend Lockfile Bootstrap workflow or the documented supported local npm commands.
-2. Review and commit the real generated `frontend/package-lock.json`.
-3. Confirm `node scripts/check-version.mjs 2.0.12`.
-4. Observe Backend CI on the intended release commit.
-5. Observe Frontend CI using the committed lockfile.
-6. Observe Version Sync, CodeQL, and applicable security/dependency checks.
-7. Review the open frontend dependency PRs separately; do not let non-required major upgrades destabilize the release candidate.
-8. Verify clean PostgreSQL/Flyway packaged startup and `/actuator/health`.
-9. Execute role-based smoke tests.
-10. Record accessibility evidence.
-11. Execute the isolated backup/restore drill.
-12. Enable `main` branch protection using stable green check names.
-13. Re-read `CHANGELOG.md`, `ROADMAP.md`, `docs/releases/2.0.12.md`, `docs/release.md`, and this handoff.
-14. Only then create and push `v2.0.12`.
-15. Observe the tag-triggered release workflow itself before declaring publication complete.
+### 5. Final documentation/checkpoint reconciliation
 
-Release command **only after every pre-tag gate is closed**:
+After the above:
+
+- close PR #11 without merge;
+- align its temporary branch back to final `main`;
+- update `CHANGELOG.md`;
+- update `ROADMAP.md`;
+- update `docs/releases/2.0.12.md`;
+- update this file;
+- refresh `docs/repository-reference.md` for the committed lockfile, Recovery Drill, and CODEOWNERS;
+- confirm no temporary probe markers exist on `main`;
+- confirm no known blocker/critical defects remain.
+
+### 6. Tag only after all pre-tag gates close
 
 ```bash
 git tag -a v2.0.12 -m "LibraCore v2.0.12"
 git push origin v2.0.12
 ```
 
-## Documentation map
+Then observe the tag-triggered Release workflow itself. Publication is complete only if that release run succeeds and expected artifacts/checksums are present.
 
-- overview/current source version: `README.md`
-- complete tracked-file map: `docs/repository-reference.md`
-- 2.0.12 release-candidate notes: `docs/releases/2.0.12.md`
+## Current documentation map
+
+- overview and setup entry point: `README.md`
+- exhaustive tracked-file purpose map: `docs/repository-reference.md`
+- release-candidate checklist/evidence: `docs/releases/2.0.12.md`
 - release process: `docs/release.md`
+- testing/quality gates: `docs/testing.md`
+- backup/recovery: `docs/backup-restore.md`
+- branch protection: `docs/branch-protection.md`
+- roadmap: `ROADMAP.md`
 - delivered/recent changes: `CHANGELOG.md`
-- remaining release/product work: `ROADMAP.md`
 - architecture: `docs/architecture.md`
 - API: `docs/api.md`
 - setup: `docs/setup.md`
 - development: `docs/development.md`
-- testing: `docs/testing.md`
 - deployment: `docs/deployment.md`
-- backup/restore: `docs/backup-restore.md`
 - accessibility: `docs/accessibility.md`
 - performance: `docs/performance.md`
 - troubleshooting: `docs/troubleshooting.md`
-- branch protection: `docs/branch-protection.md`
 - security/privacy: `SECURITY.md`, `PRIVACY.md`, `THREAT_MODEL.md`
 - architecture decisions: `docs/adr/`
-- continuation truth: this file
+- continuation truth: this file.
 
 ## Continuation rule
 
-Do not add unrelated feature expansion before closing the explicit 2.0.12 release blockers. On the next continuation, first inspect current `main`, `frontend/package-lock.json`, the latest CI/check evidence, open dependency PRs, and branch protection. The first expected source-changing event is the real npm-generated lockfile commit. After that, run/observe the final verification matrix, review pending dependency updates separately, complete runtime/smoke/accessibility/backup gates, enable branch protection, and only then consider `v2.0.12` ready for tagging.
+Do **not** start unrelated feature expansion on the next continuation. First inspect:
+
+1. current `main` head;
+2. PR #11 six-check workflow conclusions and logs;
+3. `main` branch-protection metadata;
+4. current manual smoke/accessibility evidence.
+
+Fix any failing automated gate, finish the manual evidence, enable host enforcement, reconcile docs, and only then tag 2.0.12.
 
 **Made by the Sanskar**
