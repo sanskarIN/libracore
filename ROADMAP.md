@@ -17,9 +17,15 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 - [x] Add a cross-manifest version guard and GitHub Actions version-sync check.
 - [x] Remove historical hard-coded backend JAR filenames from backend CI and release packaging.
 - [x] Make release automation reject a tag that disagrees with executable manifest versions.
-- [x] Make release automation require a committed frontend lockfile and `npm ci`.
+- [x] Make release automation require a committed frontend lockfile and reproducible `npm ci`.
+- [x] Make release automation start the exact packaged backend JAR against PostgreSQL and require a healthy `/actuator/health` response before publication.
 - [x] Separate lockfile generation into an explicit maintainer bootstrap workflow; keep normal frontend CI read-only.
-- [ ] Generate, review, and commit the synchronized `frontend/package-lock.json` using the supported Node/npm toolchain.
+- [x] Fix first-time lockfile detection so an untracked generated `frontend/package-lock.json` is recognized correctly.
+- [x] Preserve generated lockfile artifacts even when later frontend verification fails.
+- [x] Cancel superseded Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and lockfile-bootstrap runs.
+- [x] Move core GitHub Actions to the current supported Node 24 runtime lines used by this repository.
+- [x] Exercise the hosted lockfile bootstrap far enough to prove npm lockfile generation and `npm ci` succeed, then fix the strict TypeScript defect it exposed.
+- [ ] Generate, review, and commit the synchronized `frontend/package-lock.json` using the supported Node/npm toolchain after the complete frontend quality gate passes.
 - [ ] Observe successful backend/frontend/version/security CI on the final 2.0.12 commit and fix every failure.
 - [ ] Run clean PostgreSQL migration/startup/health verification and a backup/restore drill.
 - [ ] Complete role-based browser smoke testing and accessibility evidence.
