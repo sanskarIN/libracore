@@ -10,8 +10,10 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 - Preserve the generated frontend lockfile as a short-lived Actions artifact before later verification so a failing quality gate does not discard useful dependency-state evidence.
 - Cancel superseded Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and lockfile-bootstrap runs to reduce stale verification and runner waste.
 - The tagged release workflow now starts the packaged backend JAR against PostgreSQL and requires a healthy `/actuator/health` response before publication.
+- Added an automated Recovery Drill that migrates a disposable PostgreSQL source database, runs the repository backup/restore scripts, validates checksum/schema/data restoration, and health-checks the packaged backend against the restored database.
 - Upgraded supported GitHub Actions runtime lines across the repository: `actions/checkout@v7`, `actions/setup-node@v7`, `actions/upload-artifact@v7`, `actions/dependency-review-action@v5`, and `softprops/action-gh-release@v3`; `actions/setup-java@v5` remains on its stable production line.
-- Disabled persisted checkout credentials in read-only Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and release source checkout; the lockfile bootstrap intentionally retains credentials because it must push the generated lockfile.
+- Disabled persisted checkout credentials in read-only Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, Recovery Drill, and release source checkout; the lockfile bootstrap intentionally retains credentials because it must push the generated lockfile.
+- Added `.github/CODEOWNERS` with explicit ownership of CI/release, security, Flyway migration, and recovery-sensitive paths.
 - Closed the superseded GitHub Actions Dependabot PRs after absorbing their supported upgrades directly into the hardened workflows.
 - Deferred TypeScript 7 and Node 26 type-definition major upgrades from the 2.0.12 stabilization line while continuing to allow normal non-major dependency updates.
 - Release documentation and the roadmap now distinguish workflow/configuration evidence from final release-commit evidence.
@@ -24,16 +26,17 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 ### Verification evidence
 
 - A temporary same-repository probe completed CodeQL successfully for both Java/Kotlin and JavaScript/TypeScript.
-- The hosted lockfile bootstrap successfully generated the npm lockfile and completed `npm ci`; the first executable frontend failure was then isolated to two strict TypeScript errors in `frontend/src/api.ts`.
-- Those strict TypeScript errors are fixed on `main`, and the failed bootstrap job has been re-run against the corrected source to continue the full lint/typecheck/test/build gate.
-- Frontend dependency PRs remain intentionally unmerged until a committed lockfile enables reproducible frontend CI and dependency review against the exact resolved graph.
+- The hosted lockfile bootstrap successfully generated the npm lockfile and completed `npm ci`; the first executable frontend failure was isolated to two strict TypeScript errors in `frontend/src/api.ts`.
+- After those strict TypeScript errors were fixed, the hosted bootstrap rerun completed lockfile generation, reproducible installation, lint, strict typecheck, Vitest, production build, artifact upload, and lockfile commit successfully.
+- The real npm-generated `frontend/package-lock.json` is committed in `89d1c833` and is now the canonical resolved frontend dependency graph for 2.0.12.
+- Draft PR #11 is the disposable current-source verification harness for Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill; it must not be merged.
 
 ### Release gates
 
-- Commit and review `frontend/package-lock.json` after the full frontend quality gate passes.
-- Observe successful backend/frontend/version/security CI on the final release-candidate commit.
-- Complete clean PostgreSQL migration/startup, backup/restore, role smoke, and accessibility evidence.
-- Enable `main` branch protection after stable required-check names are confirmed.
+- Observe successful Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill on the current release-verification source.
+- Complete role-based browser smoke and manual accessibility evidence.
+- Enable `main` branch protection/code-owner enforcement after stable required-check names are confirmed.
+- Tag and publish `v2.0.12` only after every pre-tag gate is closed.
 
 ## [2.0.12] - 2026-08-19 — release candidate
 
@@ -81,7 +84,7 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 - Password hashing, session expiry/revocation, bounded validation, parameterized data access, server-side authorization, CORS configuration, audit logging, and secret-safe configuration.
 - Documented trust boundaries, residual risks, private vulnerability reporting, privacy responsibilities, production boundaries, and branch-protection expectations.
-- Release verification now refuses to publish without the committed frontend dependency lockfile.
+- Release verification refuses to publish without the committed frontend dependency lockfile.
 
 > `2.0.12` is prepared in source but must not be treated as a published stable release until the explicit gates in `what_changed.md` and `ROADMAP.md` are closed and `v2.0.12` is tagged.
 
