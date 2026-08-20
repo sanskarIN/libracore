@@ -17,7 +17,9 @@ The project intentionally favors explicit business rules, database migrations, d
 
 ## Status
 
-The executable backend and frontend manifests are aligned to **2.0.12**. `what_changed.md` is the canonical continuation/handoff document and records completed work, verification evidence, limitations, recent commits, and the next exact tasks. A version value in source does not by itself mean that the corresponding GitHub release has passed every release gate.
+The executable backend and frontend manifests are aligned to **2.0.12**. The real npm-generated `frontend/package-lock.json` is committed, and the hosted lockfile-bootstrap verification has successfully completed reproducible installation, linting, strict type checking, tests, and the production frontend build. `what_changed.md` is the canonical continuation/handoff document and records completed work, verification evidence, limitations, recent commits, and the next exact tasks. A version value in source does not by itself mean that the corresponding GitHub release has passed every release gate.
+
+The remaining 2.0.12 gates are final CI/security evidence on the intended source, clean backend/database and recovery verification, role/accessibility smoke evidence, and repository branch-protection enforcement. Do not infer a published stable release until those gates are closed and `v2.0.12` is tagged.
 
 ## Feature map
 
@@ -142,13 +144,13 @@ In a second terminal:
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
 Default development UI: `http://localhost:5173`.
 
-> A committed frontend transitive lockfile is still a release gate. Until `frontend/package-lock.json` exists on the checked-out commit, local development can use `npm install`; reproducible CI/release verification requires the committed lockfile and `npm ci`. Maintainers can use the **Frontend Lockfile Bootstrap** GitHub Actions workflow or generate the lock locally.
+> `frontend/package-lock.json` is committed and is the canonical resolved frontend dependency graph for 2.0.12. Use `npm ci` for clean/reproducible installs. Use `npm install` only when intentionally changing dependency declarations and review the resulting lockfile diff together with `package.json`.
 
 ## Configuration
 
@@ -188,19 +190,11 @@ mvn spring-boot:run
 
 ### Frontend
 
-Before the lockfile is committed:
+Clean verification uses the committed lockfile:
 
 ```bash
 cd frontend
-npm install
-npm run check
-```
-
-After the lockfile is committed, clean verification should use:
-
-```bash
-cd frontend
-npm ci
+npm ci --ignore-scripts --no-audit --no-fund
 npm run check
 ```
 
@@ -298,7 +292,7 @@ Read [`docs/deployment.md`](docs/deployment.md) and [`docs/troubleshooting.md`](
 
 ## Releases
 
-LibraCore source manifests are currently prepared for **2.0.12**. A release tag must match the backend/frontend manifest version; release automation validates this before packaging. The release workflow also refuses to publish without a committed frontend lockfile and packages the backend JAR without a hard-coded historical filename.
+LibraCore source manifests are currently prepared for **2.0.12**. A release tag must match the backend/frontend manifest version; release automation validates this before packaging. The release workflow requires the committed frontend lockfile, performs reproducible frontend verification, starts the packaged backend against PostgreSQL, requires a healthy actuator response, and packages the backend JAR without a hard-coded historical filename.
 
 Release procedure, migration checks, rollback expectations, artifact verification, and release-note requirements are in [`docs/release.md`](docs/release.md).
 
