@@ -10,12 +10,15 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 - Preserve the verified generated frontend lockfile as a short-lived Actions artifact before the bootstrap commit step.
 - Cancel superseded Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and lockfile-bootstrap runs to reduce stale verification and runner waste.
 - The tagged release workflow now starts the packaged backend JAR against PostgreSQL and requires a healthy `/actuator/health` response before publication.
+- Upgraded supported GitHub Actions runtime lines across the repository: `actions/checkout@v7`, `actions/setup-node@v7`, `actions/upload-artifact@v7`, `actions/dependency-review-action@v5`, and `softprops/action-gh-release@v3`; `actions/setup-java@v5` remains on its stable production line.
+- Closed the superseded GitHub Actions Dependabot PRs after absorbing their supported upgrades directly into the hardened workflows.
 - Release documentation now distinguishes workflow/configuration evidence from final release-commit evidence.
 
 ### Verification evidence
 
 - A temporary same-repository probe completed CodeQL successfully for both Java/Kotlin and JavaScript/TypeScript.
-- The corrected lockfile bootstrap is being exercised through an observable same-repository probe; no release claim is made until a real npm-generated lockfile is committed to `main`.
+- A corrected lockfile-bootstrap probe created an observable workflow run, but its GitHub-hosted job remained queued during the diagnostic window; no release claim is made until a real npm-generated lockfile is committed to `main`.
+- Frontend dependency PRs remain intentionally unmerged until a committed lockfile enables reproducible frontend CI and dependency review against the exact resolved graph.
 
 ### Release gates
 
