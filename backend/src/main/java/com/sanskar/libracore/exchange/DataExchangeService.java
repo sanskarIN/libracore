@@ -102,12 +102,12 @@ public class DataExchangeService {
     @Transactional(readOnly = true)
     public void writeBooksCsv(Writer writer) throws IOException {
         ensureBooksExportBound();
-        writer.write(CsvCodec.row(List.of(
+        writer.write(CsvCodec.spreadsheetSafeRow(List.of(
                 "title", "subtitle", "isbn13", "description", "languageCode",
                 "publicationYear", "editionLabel", "publisherName", "authors", "categories"
         )));
 
-        streamQuery(BOOK_EXPORT_SQL, resultSet -> writer.write(CsvCodec.row(List.of(
+        streamQuery(BOOK_EXPORT_SQL, resultSet -> writer.write(CsvCodec.spreadsheetSafeRow(List.of(
                 nullToEmpty(resultSet.getString("title")),
                 nullToEmpty(resultSet.getString("subtitle")),
                 nullToEmpty(resultSet.getString("isbn13")),
@@ -135,12 +135,12 @@ public class DataExchangeService {
     @Transactional(readOnly = true)
     public void writeMembersCsv(Writer writer) throws IOException {
         ensureMembersExportBound();
-        writer.write(CsvCodec.row(List.of(
+        writer.write(CsvCodec.spreadsheetSafeRow(List.of(
                 "homeBranchCode", "libraryCardNumber", "firstName", "lastName", "email",
                 "phone", "status", "joinedAt", "expiresAt", "notes"
         )));
 
-        streamQuery(MEMBER_EXPORT_SQL, resultSet -> writer.write(CsvCodec.row(List.of(
+        streamQuery(MEMBER_EXPORT_SQL, resultSet -> writer.write(CsvCodec.spreadsheetSafeRow(List.of(
                 nullToEmpty(resultSet.getString("branch_code")),
                 nullToEmpty(resultSet.getString("library_card_number")),
                 nullToEmpty(resultSet.getString("first_name")),
