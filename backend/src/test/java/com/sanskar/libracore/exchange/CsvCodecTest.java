@@ -52,6 +52,26 @@ class CsvCodecTest {
     }
 
     @Test
+    void neutralizesSpreadsheetFormulaPrefixes() {
+        assertEquals("'=SUM(A1:A2)", CsvCodec.spreadsheetSafeCell("=SUM(A1:A2)"));
+        assertEquals("'+4412345", CsvCodec.spreadsheetSafeCell("+4412345"));
+        assertEquals("'-1", CsvCodec.spreadsheetSafeCell("-1"));
+        assertEquals("'@command", CsvCodec.spreadsheetSafeCell("@command"));
+        assertEquals("'  =1+1", CsvCodec.spreadsheetSafeCell("  =1+1"));
+        assertEquals("'\tformula", CsvCodec.spreadsheetSafeCell("\tformula"));
+        assertEquals("ordinary text", CsvCodec.spreadsheetSafeCell("ordinary text"));
+    }
+
+    @Test
+    void spreadsheetSafeRowsRemainValidCsv() {
+        String csv = CsvCodec.spreadsheetSafeRow(List.of("=1+1", "safe,value", "@cmd"));
+
+        List<List<String>> rows = CsvCodec.parse(csv);
+
+        assertEquals(List.of("'=1+1", "safe,value", "'@cmd"), rows.getFirst());
+    }
+
+    @Test
     void rejectsUnclosedQuote() {
         ApiException exception = assertThrows(ApiException.class, () -> CsvCodec.parse("a,b\n\"broken"));
         assertEquals("csv_unclosed_quote", exception.code());
