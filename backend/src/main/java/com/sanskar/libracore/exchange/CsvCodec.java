@@ -94,6 +94,7 @@ public final class CsvCodec {
         private int inputChars;
         private int emittedRows;
         private boolean quoted;
+        private boolean skipLfAfterCr;
 
         private StreamingParser(Reader input, RowConsumer consumer) {
             this.input = input;
@@ -105,6 +106,13 @@ public final class CsvCodec {
             while ((value = read()) != -1) {
                 char ch = (char) value;
                 rejectNul(ch);
+
+                if (!quoted && skipLfAfterCr) {
+                    skipLfAfterCr = false;
+                    if (ch == '\n') {
+                        continue;
+                    }
+                }
 
                 if (quoted) {
                     if (ch != '"') {
@@ -163,6 +171,7 @@ public final class CsvCodec {
                 finishRow();
             } else if (ch == '\r') {
                 finishRow();
+                skipLfAfterCr = true;
             } else {
                 appendCellChar(cell, ch);
             }
