@@ -1,0 +1,121 @@
+name: Performance Fixture CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/performance-fixture.sql'
+      - 'scripts/load-performance-fixture.sh'
+      - 'scripts/check-performance-fixture.sh'
+      - '.github/workflows/performance-fixture-ci.yml'
+  pull_request:
+    paths:
+      - 'scripts/performance-fixture.sql'
+      - 'scripts/load-performance-fixture.sh'
+      - 'scripts/check-performance-fixture.sh'
+      - '.github/workflows/performance-fixture-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: performance-fixture-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: libracore_perf
+          POSTGRES_USER: libracore
+          POSTGRES_PASSWORD: test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U libracore -d libracore_perf"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PGPASSWORD: test-password
+      PERF_DATABASE_URL: postgresql://libracore:test-password@localhost:5432/libracore_perf
+      PERF_FIXTURE_ALLOW_WRITE: 'YES'
+      PERF_BOOKS: '120'
+      PERF_MEMBERS: '100'
+      PERF_COPIES_PER_BOOK: '2'
+      PERF_LOANS: '80'
+      PERF_RESERVATIONS: '60'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends postgresql-client
+
+      - name: Check fixture script syntax
+        run: |
+          bash -n scripts/load-performance-fixture.sh
+          bash -n scripts/check-performance-fixture.sh
+
+      - name: Apply current SQL migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r migration; do
+            echo "Applying ${migration}"
+            psql -X --no-psqlrc --set=ON_ERROR_STOP=1 \
+              --dbname="$PERF_DATABASE_URL" \
+              --file="$migration"
+          done < <(find backend/src/main/resources/db/migration -maxdepth 1 -type f -name 'V*.sql' | sort -V)
+
+          psql -X --no-psqlrc --set=ON_ERROR_STOP=1 --dbname="$PERF_DATABASE_URL" <<'SQL'
+          CREATE TABLE flyway_schema_history (
+              installed_rank INTEGER PRIMARY KEY,
+              success BOOLEAN NOT NULL
+          );
+          INSERT INTO flyway_schema_history (installed_rank, success) VALUES (1, TRUE);
+          SQL
+
+      - name: Verify explicit write gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if env -u PERF_FIXTURE_ALLOW_WRITE bash scripts/load-performance-fixture.sh > /tmp/perf-gate.log 2>&1; then
+            echo "Fixture loader unexpectedly accepted a missing write gate." >&2
+            exit 1
+          fi
+          grep -F 'PERF_FIXTURE_ALLOW_WRITE=YES' /tmp/perf-gate.log
+
+      - name: Verify database-name safety gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if PERF_DATABASE_URL='postgresql://libracore:test-password@localhost:5432/postgres' \
+             bash scripts/load-performance-fixture.sh > /tmp/perf-name-gate.log 2>&1; then
+            echo "Fixture loader unexpectedly accepted a non-benchmark database name." >&2
+            exit 1
+          fi
+          grep -F 'must end in _perf or _benchmark' /tmp/perf-name-gate.log
+
+      - name: Load fixture
+        run: bash scripts/load-performance-fixture.sh
+
+      - name: Check fixture invariants
+        run: bash scripts/check-performance-fixture.sh
+
+      - name: Reload fixture to prove repeatability
+        run: bash scripts/load-performance-fixture.sh
+
+      - name: Recheck deterministic fixture shape
+        run: bash scripts/check-performance-fixture.sh
