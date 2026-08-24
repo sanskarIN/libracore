@@ -18,6 +18,14 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 - Deferred TypeScript 7 and Node 26 type-definition major upgrades from the 2.0.12 stabilization line while continuing to allow normal non-major dependency updates.
 - Release documentation and the roadmap now distinguish workflow/configuration evidence from final release-commit evidence.
 
+### Operational hardening
+
+- CSV imports now stream strict UTF-8 request data through a bounded row parser instead of materializing both the complete request body and complete parsed document.
+- CSV parser budgets explicitly cap decoded input at 2,000,000 characters, 10,000 rows, 64 columns per row, and 20,000 characters per cell while preserving quoted multiline and CRLF behavior.
+- Book/member CSV exports now reject datasets above 10,000 records, use forward-only read-only JDBC streaming with a 250-row fetch window, and write directly to the HTTP response.
+- Exported user-controlled CSV cells neutralize spreadsheet formula/command prefixes without rewriting imported values.
+- Added parser, service, and controller regression coverage for CSV boundaries, Reader failures, streamed imports/exports, oversized exports, and spreadsheet formula neutralization.
+
 ### Fixed
 
 - Fixed strict `exactOptionalPropertyTypes` failures in the frontend API client by representing the optional correlation ID explicitly as `string | undefined` and omitting POST request bodies instead of assigning `body: undefined`.
