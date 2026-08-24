@@ -1,6 +1,6 @@
 # Repository Reference
 
-This document describes every tracked source/configuration/documentation file in the LibraCore repository at the 2026-08-20 **2.0.12 release-candidate closure** checkpoint. Directories themselves are organizational and are not listed as files.
+This document describes every tracked source/configuration/documentation file in the LibraCore repository at the 2026-08-24 **2.0.12 release-candidate / 2.1 operational-hardening continuation** checkpoint. Directories themselves are organizational and are not listed as files.
 
 ## Root files
 
@@ -8,13 +8,13 @@ This document describes every tracked source/configuration/documentation file in
 - `.env.example` — placeholder-only environment/configuration contract for local/deployment setup.
 - `.gitattributes` — Git text/line-ending behavior.
 - `.gitignore` — excludes local secrets, build output, IDE state, dependencies, and generated files.
-- `CHANGELOG.md` — notable delivered changes, including the 2.0.12 release-candidate line, completed frontend dependency closure, recovery automation, and remaining release gates.
+- `CHANGELOG.md` — notable delivered changes, including the 2.0.12 release-candidate line, completed frontend dependency/recovery closure, CSV operational hardening, and remaining release gates.
 - `CODE_OF_CONDUCT.md` — community participation and enforcement expectations.
 - `CONTRIBUTING.md` — contributor setup, verification, engineering, commit, and security rules.
 - `LICENSE` — MIT license text.
 - `PRIVACY.md` — data categories, local/browser storage, export/backup privacy, retention, and operator responsibilities.
 - `README.md` — project overview, current 2.0.12 source status, features, stack, reproducible setup, architecture, quality, support, and documentation navigation.
-- `ROADMAP.md` — 2.0.12 release closure plus later operational/product hardening milestones.
+- `ROADMAP.md` — 2.0.12 release closure plus later operational/product hardening milestones and completed CSV memory/safety work.
 - `SECURITY.md` — supported-version posture, private vulnerability reporting, security expectations, and deployment responsibility.
 - `SUPPORT.md` — support channels, safe bug-report content, and troubleshooting pointers.
 - `THREAT_MODEL.md` — assets, trust boundaries, threats, mitigations, abuse cases, residual risks, and review triggers.
@@ -77,10 +77,10 @@ This document describes every tracked source/configuration/documentation file in
 
 ## Backend data-exchange module
 
-- `backend/src/main/java/com/sanskar/libracore/exchange/CsvCodec.java` — deterministic CSV parsing/encoding utility.
-- `backend/src/main/java/com/sanskar/libracore/exchange/DataExchangeController.java` — authorized book/member CSV import/export HTTP endpoints.
+- `backend/src/main/java/com/sanskar/libracore/exchange/CsvCodec.java` — incremental bounded CSV parser/encoder with quoted-field compatibility, stable parser errors, and spreadsheet-safe export cell encoding.
+- `backend/src/main/java/com/sanskar/libracore/exchange/DataExchangeController.java` — authorized book/member CSV endpoints with strict UTF-8 Reader-based imports and streamed attachment responses.
 - `backend/src/main/java/com/sanskar/libracore/exchange/DataExchangeModels.java` — CSV import result model.
-- `backend/src/main/java/com/sanskar/libracore/exchange/DataExchangeService.java` — bounded/validated catalog and member CSV exchange logic.
+- `backend/src/main/java/com/sanskar/libracore/exchange/DataExchangeService.java` — transactional row-by-row imports plus bounded, forward-only JDBC book/member export streaming and audit integration.
 
 ## Backend member module
 
@@ -132,7 +132,9 @@ This document describes every tracked source/configuration/documentation file in
 - `backend/src/test/java/com/sanskar/libracore/catalog/Isbn13Test.java` — valid/invalid ISBN-13 normalization/check-digit behavior.
 - `backend/src/test/java/com/sanskar/libracore/circulation/FinePolicyServiceTest.java` — overdue/grace/cap policy calculation coverage.
 - `backend/src/test/java/com/sanskar/libracore/common/TextNormalizerTest.java` — shared normalization behavior.
-- `backend/src/test/java/com/sanskar/libracore/exchange/CsvCodecTest.java` — CSV escaping/parsing regression coverage.
+- `backend/src/test/java/com/sanskar/libracore/exchange/CsvCodecTest.java` — CSV streaming, escaping, CRLF/quoted-field compatibility, parser-budget/error, Reader-failure, and spreadsheet-formula safety regression coverage.
+- `backend/src/test/java/com/sanskar/libracore/exchange/DataExchangeControllerTest.java` — HTTP CSV attachment streaming/header regression coverage for book/member exports.
+- `backend/src/test/java/com/sanskar/libracore/exchange/DataExchangeServiceTest.java` — Reader-based import processing plus book/member export-limit regression coverage.
 
 ## Frontend root/build files
 
@@ -192,17 +194,17 @@ This document describes every tracked source/configuration/documentation file in
 ## Documentation
 
 - `docs/accessibility.md` — accessibility requirements and manual release audit.
-- `docs/api.md` — endpoint families, auth/error/pagination conventions, and source-of-truth guidance.
+- `docs/api.md` — endpoint families, authorization/error/pagination conventions, streamed CSV exchange limits/safety behavior, and source-of-truth guidance.
 - `docs/architecture.md` — system/module/data/auth/configuration architecture.
 - `docs/backup-restore.md` — backup metadata, automated disposable Recovery Drill, environment-specific manual restore drill, safeguards, migration compatibility, and RPO/RTO guidance.
 - `docs/branch-protection.md` — recommended `main` ruleset, code-owner review, required checks including Recovery Drill where relevant, bypass, lockfile state, and tag-protection guidance.
 - `docs/deployment.md` — production topology, secrets/TLS/CORS/DB/migration/proxy/health/scale boundaries.
 - `docs/development.md` — backend/frontend/database/config/error/logging/commit development workflow.
-- `docs/performance.md` — budgets, measurement method, database/frontend/load/regression guidance.
+- `docs/performance.md` — performance budgets, CSV exchange memory bounds/streaming behavior, measurement method, database/frontend/load/regression guidance.
 - `docs/release.md` — 2.0.12-aware reproducible pre-release verification, committed-lockfile state, least-privilege checkout behavior, version/tag/artifact/migration/rollback/release-note process.
 - `docs/releases/2.0.12.md` — dedicated 2.0.12 release-candidate scope, completed frontend dependency closure, hardening changes, live verification harness, and exact pre-tag checklist.
 - `docs/setup.md` — clean checkout prerequisites, database/backend/frontend startup using the committed lockfile, dependency-lock maintenance, full verification, and reset notes.
-- `docs/testing.md` — test layers, committed-lockfile quality gates, hosted frontend evidence, determinism, regression, accessibility/security checks, and current limitations.
+- `docs/testing.md` — test layers, committed-lockfile quality gates, CSV exchange regression matrix, hosted frontend evidence, determinism, regression, accessibility/security checks, and current limitations.
 - `docs/troubleshooting.md` — database, migration, auth, CORS, npm, TypeScript, circulation, staff-admin, CSV, notification, and recovery diagnosis.
 - `docs/adr/0001-modular-monolith.md` — decision to keep strong library transactions in a modular monolith.
 - `docs/adr/0002-postgresql-flyway.md` — PostgreSQL + append-only Flyway schema-history decision.
