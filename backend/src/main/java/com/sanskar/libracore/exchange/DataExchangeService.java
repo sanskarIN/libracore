@@ -13,6 +13,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Reader;
+import java.io.StringReader;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -147,86 +149,105 @@ public class DataExchangeService {
 
     @Transactional
     public ImportResult importBooks(String csv, UUID actorUserId) {
-        List<List<String>> rows = CsvCodec.parse(csv);
-        if (rows.isEmpty()) {
-            throw ApiException.badRequest("csv_empty", "CSV must include a header row.");
+        if (csv == null) {
+            throw ApiException.badRequest("csv_missing", "CSV content is required.");
         }
-        Map<String, Integer> headers = headers(rows.getFirst());
-        requireHeaders(headers, "title");
+        return importBooks(new StringReader(csv), actorUserId);
+    }
 
-        int imported = 0;
-        List<String> warnings = new ArrayList<>();
-        for (int index = 1; index < rows.size(); index++) {
-            List<String> row = rows.get(index);
-            if (row.stream().allMatch(String::isBlank)) {
-                continue;
+    @Transactional
+    public ImportResult importBooks(Reader csv, UUID actorUserId) {
+        ImportState state = new ImportState();
+        CsvCodec.forEachRow(csv, (csvRow, row) -> {
+            if (state.headers == null) {
+                state.headers = headers(row);
+                requireHeaders(state.headers, "title");
+                return;
             }
-            String title = value(row, headers, "title");
-            Integer publicationYear = parseIntegerNullable(value(row, headers, "publicationyear"), index + 1, "publicationYear");
-            String languageCode = value(row, headers, "languagecode");
+            if (row.stream().allMatch(String::isBlank)) {
+                return;
+            }
+
+            String title = value(row, state.headers, "title");
+            Integer publicationYear = parseIntegerNullable(
+                    value(row, state.headers, "publicationyear"),
+                    csvRow,
+                    "publicationYear"
+            );
+            String languageCode = value(row, state.headers, "languagecode");
             if (languageCode.isBlank()) {
                 languageCode = "en";
             }
 
             CreateBookRequest request = new CreateBookRequest(
                     title,
-                    blankToNull(value(row, headers, "subtitle")),
-                    blankToNull(value(row, headers, "isbn13")),
-                    blankToNull(value(row, headers, "description")),
+                    blankToNull(value(row, state.headers, "subtitle")),
+                    blankToNull(value(row, state.headers, "isbn13")),
+                    blankToNull(value(row, state.headers, "description")),
                     languageCode,
                     publicationYear,
-                    blankToNull(value(row, headers, "editionlabel")),
-                    blankToNull(value(row, headers, "publishername")),
-                    splitPipe(value(row, headers, "authors")),
-                    splitPipe(value(row, headers, "categories"))
+                    blankToNull(value(row, state.headers, "editionlabel")),
+                    blankToNull(value(row, state.headers, "publishername")),
+                    splitPipe(value(row, state.headers, "authors")),
+                    splitPipe(value(row, state.headers, "categories"))
             );
-            validateRequest(request, index + 1);
+            validateRequest(request, csvRow);
             try {
                 catalogService.createBook(request, actorUserId);
             } catch (ApiException exception) {
-                throw rowError(index + 1, exception.getMessage());
+                throw rowError(csvRow, exception.getMessage());
             }
-            imported++;
-        }
+            state.imported++;
+        });
+
+        requireHeaderRow(state);
         auditService.success(actorUserId, "CSV_IMPORT_BOOKS", "BOOK", null, null,
-                "{\"rows\":" + imported + "}");
-        return new ImportResult("books", imported, List.copyOf(warnings));
+                "{\"rows\":" + state.imported + "}");
+        return new ImportResult("books", state.imported, List.copyOf(state.warnings));
     }
 
     @Transactional
     public ImportResult importMembers(String csv, UUID actorUserId) {
-        List<List<String>> rows = CsvCodec.parse(csv);
-        if (rows.isEmpty()) {
-            throw ApiException.badRequest("csv_empty", "CSV must include a header row.");
+        if (csv == null) {
+            throw ApiException.badRequest("csv_missing", "CSV content is required.");
         }
-        Map<String, Integer> headers = headers(rows.getFirst());
-        requireHeaders(headers, "homebranchcode", "librarycardnumber", "firstname", "lastname", "email");
+        return importMembers(new StringReader(csv), actorUserId);
+    }
 
-        int imported = 0;
-        List<String> warnings = new ArrayList<>();
-        for (int index = 1; index < rows.size(); index++) {
-            int csvRow = index + 1;
-            List<String> row = rows.get(index);
-            if (row.stream().allMatch(String::isBlank)) {
-                continue;
+    @Transactional
+    public ImportResult importMembers(Reader csv, UUID actorUserId) {
+        ImportState state = new ImportState();
+        CsvCodec.forEachRow(csv, (csvRow, row) -> {
+            if (state.headers == null) {
+                state.headers = headers(row);
+                requireHeaders(state.headers, "homebranchcode", "librarycardnumber", "firstname", "lastname", "email");
+                return;
             }
-            String branchCode = value(row, headers, "homebranchcode").trim().toUpperCase(Locale.ROOT);
+            if (row.stream().allMatch(String::isBlank)) {
+                return;
+            }
+
+            String branchCode = value(row, state.headers, "homebranchcode").trim().toUpperCase(Locale.ROOT);
             UUID branchId = jdbc.sql("SELECT id FROM branch WHERE code = :code AND active = TRUE")
                     .param("code", branchCode)
                     .query(UUID.class)
                     .optional()
                     .orElseThrow(() -> rowError(csvRow, "homeBranchCode does not match an active branch"));
 
-            OffsetDateTime expiresAt = parseDateTimeNullable(value(row, headers, "expiresat"), csvRow, "expiresAt");
+            OffsetDateTime expiresAt = parseDateTimeNullable(
+                    value(row, state.headers, "expiresat"),
+                    csvRow,
+                    "expiresAt"
+            );
             CreateMemberRequest request = new CreateMemberRequest(
                     branchId,
-                    value(row, headers, "librarycardnumber"),
-                    value(row, headers, "firstname"),
-                    value(row, headers, "lastname"),
-                    value(row, headers, "email"),
-                    blankToNull(value(row, headers, "phone")),
+                    value(row, state.headers, "librarycardnumber"),
+                    value(row, state.headers, "firstname"),
+                    value(row, state.headers, "lastname"),
+                    value(row, state.headers, "email"),
+                    blankToNull(value(row, state.headers, "phone")),
                     expiresAt,
-                    blankToNull(value(row, headers, "notes")),
+                    blankToNull(value(row, state.headers, "notes")),
                     null
             );
             validateRequest(request, csvRow);
@@ -235,18 +256,26 @@ public class DataExchangeService {
             } catch (ApiException exception) {
                 throw rowError(csvRow, exception.getMessage());
             }
-            String requestedStatus = value(row, headers, "status").trim().toUpperCase(Locale.ROOT);
+            String requestedStatus = value(row, state.headers, "status").trim().toUpperCase(Locale.ROOT);
             if (!requestedStatus.isBlank() && !"ACTIVE".equals(requestedStatus)) {
                 if (!List.of("SUSPENDED", "CLOSED").contains(requestedStatus)) {
                     throw rowError(csvRow, "status must be ACTIVE, SUSPENDED, or CLOSED");
                 }
-                warnings.add("Row " + csvRow + ": imported as ACTIVE; change status through the member lifecycle API after review.");
+                state.warnings.add("Row " + csvRow + ": imported as ACTIVE; change status through the member lifecycle API after review.");
             }
-            imported++;
-        }
+            state.imported++;
+        });
+
+        requireHeaderRow(state);
         auditService.success(actorUserId, "CSV_IMPORT_MEMBERS", "MEMBER", null, null,
-                "{\"rows\":" + imported + "}");
-        return new ImportResult("members", imported, List.copyOf(warnings));
+                "{\"rows\":" + state.imported + "}");
+        return new ImportResult("members", state.imported, List.copyOf(state.warnings));
+    }
+
+    private static void requireHeaderRow(ImportState state) {
+        if (state.headers == null) {
+            throw ApiException.badRequest("csv_empty", "CSV must include a header row.");
+        }
     }
 
     private <T> void validateRequest(T request, int row) {
@@ -347,6 +376,12 @@ public class DataExchangeService {
 
     private static String nullToEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private static final class ImportState {
+        private Map<String, Integer> headers;
+        private int imported;
+        private final List<String> warnings = new ArrayList<>();
     }
 
     private record BookExportRow(
