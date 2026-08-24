@@ -50,15 +50,33 @@ public final class CsvCodec {
     }
 
     public static String row(List<?> values) {
-        StringBuilder output = new StringBuilder();
-        for (int index = 0; index < values.size(); index++) {
-            if (index > 0) {
-                output.append(',');
+        return row(values, false);
+    }
+
+    public static String spreadsheetSafeRow(List<?> values) {
+        return row(values, true);
+    }
+
+    public static String spreadsheetSafeCell(String value) {
+        String safe = value == null ? "" : value;
+        int firstMeaningful = 0;
+        while (firstMeaningful < safe.length()) {
+            char ch = safe.charAt(firstMeaningful);
+            if (ch != ' ' && ch != '\f') {
+                break;
             }
-            output.append(escape(values.get(index) == null ? "" : String.valueOf(values.get(index))));
+            firstMeaningful++;
         }
-        output.append('\n');
-        return output.toString();
+        if (firstMeaningful >= safe.length()) {
+            return safe;
+        }
+
+        char first = safe.charAt(firstMeaningful);
+        if (first == '=' || first == '+' || first == '-' || first == '@'
+                || first == '\t' || first == '\r' || first == '\n') {
+            return "'" + safe;
+        }
+        return safe;
     }
 
     public static String escape(String value) {
@@ -69,6 +87,19 @@ public final class CsvCodec {
             return safe;
         }
         return '"' + safe.replace("\"", "\"\"") + '"';
+    }
+
+    private static String row(List<?> values, boolean spreadsheetSafe) {
+        StringBuilder output = new StringBuilder();
+        for (int index = 0; index < values.size(); index++) {
+            if (index > 0) {
+                output.append(',');
+            }
+            String value = values.get(index) == null ? "" : String.valueOf(values.get(index));
+            output.append(escape(spreadsheetSafe ? spreadsheetSafeCell(value) : value));
+        }
+        output.append('\n');
+        return output.toString();
     }
 
     private static void appendCellChar(StringBuilder cell, char ch) {
