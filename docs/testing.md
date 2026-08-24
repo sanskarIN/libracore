@@ -39,12 +39,29 @@ Vitest tests cover pure utilities and state/storage edge cases. New regression-p
 
 ## Test layers
 
-- **Unit:** normalization, ISBN validation, CSV codec, fine policy calculations, formatting/session/theme/API utilities.
-- **Service/integration:** circulation transactions, reservations, member/account ownership, fine settlement, staff account administration, imports, database constraints and security boundaries.
-- **HTTP/security:** authentication, role checks, validation errors, ownership restrictions, CORS/security behavior.
+- **Unit:** normalization, ISBN validation, streaming CSV parsing/encoding/safety limits, fine policy calculations, formatting/session/theme/API utilities.
+- **Service/integration:** circulation transactions, reservations, member/account ownership, fine settlement, staff account administration, streamed imports, bounded exports, database constraints and security boundaries.
+- **HTTP/security:** authentication, role checks, validation errors, ownership restrictions, CORS/security behavior, and streaming CSV response contracts.
 - **UI/component:** state rendering, form validation, role-aware navigation, accessible names and keyboard interaction.
 - **End-to-end:** sign in, catalog lookup, member management, issue/return, reservation/cancellation, staff account administration, member self-service, reports/import/export.
 - **Operational:** clean migration, packaged startup/health, backup restore drill.
+
+## CSV exchange regression matrix
+
+Backend regression coverage for CSV exchange now asserts:
+
+- quoted fields containing commas, quotes, and embedded newlines round-trip correctly;
+- CRLF is treated as one record boundary while quoted multiline content remains data;
+- NUL characters, malformed quoting, and unclosed quoted fields are rejected;
+- the 2,000,000-character document budget is enforced;
+- the 10,000-row, 64-column, and 20,000-character-per-cell budgets are enforced;
+- Reader I/O failures map to the stable `csv_read_failed` API error;
+- spreadsheet formula prefixes (`=`, `+`, `-`, `@`, tab, CR, LF) are neutralized in export representation without changing normal cells;
+- book imports can be consumed directly from a Reader without building the complete parsed document;
+- oversized book/member exports are rejected before row streaming begins;
+- controller exports use `StreamingResponseBody`, retain attachment/cache headers, and pass a Writer to the exchange service instead of building a complete response String.
+
+When CSV limits or encoding rules change, update both the tests and `docs/api.md`/`docs/performance.md` in the same change.
 
 ## Regression policy
 
@@ -69,7 +86,7 @@ Read-only verification workflows disable persisted checkout credentials after so
 ## Current 2.0.12 limitations
 
 - Browser-level E2E automation is not yet committed, so primary web journeys still require a documented manual smoke pass in addition to automated frontend/backend checks.
-- Final successful Backend CI, Frontend CI, Version Sync, CodeQL, and Dependency Review evidence is being verified against the intended release-candidate source and must be observed rather than inferred.
+- Final successful Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill evidence is being verified against the intended release-candidate source and must be observed rather than inferred.
 - Clean backup/restore and accessibility evidence still need to be recorded.
 - `main` branch protection/rules still need to be enabled after stable required-check names are confirmed.
 
