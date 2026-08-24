@@ -38,7 +38,8 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 - [ ] Add browser-level end-to-end tests for sign-in, catalog, circulation, reservation, staff-account, and staff-report journeys.
 - [ ] Add automated accessibility scanning plus manual keyboard/screen-reader evidence.
 - [ ] Add rate-limit guidance/reference configuration for internet-facing deployments.
-- [ ] Add import/export edge-case and spreadsheet-formula safety regression coverage.
+- [x] Add import/export edge-case and spreadsheet-formula safety regression coverage.
+- [x] Bound CSV imports and exports with incremental parsing/writing, explicit document/row/column/cell limits, and streamed database/result handling.
 - [ ] Add repeatable performance fixtures for large catalog/member/circulation datasets.
 - [x] Add restore-drill automation against disposable databases.
 
