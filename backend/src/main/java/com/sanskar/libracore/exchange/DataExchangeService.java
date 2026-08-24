@@ -9,12 +9,18 @@ import com.sanskar.libracore.member.MemberModels.CreateMemberRequest;
 import com.sanskar.libracore.member.MemberService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
+import java.io.Writer;
+import java.sql.ResultSet;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,8 +35,38 @@ import java.util.UUID;
 @Service
 public class DataExchangeService {
     private static final int MAX_EXPORT_ROWS = 10_000;
+    private static final int EXPORT_FETCH_SIZE = 250;
+
+    private static final String BOOK_EXPORT_SQL = """
+            SELECT b.title, b.subtitle, b.isbn13, b.description, b.language_code,
+                   b.publication_year, b.edition_label, p.name AS publisher_name,
+                   COALESCE((
+                       SELECT string_agg(a.display_name, '|' ORDER BY ba.contribution_order)
+                       FROM book_author ba
+                       JOIN author a ON a.id = ba.author_id
+                       WHERE ba.book_id = b.id
+                   ), '') AS authors,
+                   COALESCE((
+                       SELECT string_agg(c.name, '|' ORDER BY c.name)
+                       FROM book_category bc
+                       JOIN category c ON c.id = bc.category_id
+                       WHERE bc.book_id = b.id
+                   ), '') AS categories
+            FROM book b
+            LEFT JOIN publisher p ON p.id = b.publisher_id
+            ORDER BY LOWER(b.title), b.id
+            """;
+
+    private static final String MEMBER_EXPORT_SQL = """
+            SELECT b.code AS branch_code, m.library_card_number, m.first_name, m.last_name,
+                   m.email, m.phone, m.status, m.joined_at, m.expires_at, m.notes
+            FROM member m
+            JOIN branch b ON b.id = m.home_branch_id
+            ORDER BY LOWER(m.last_name), LOWER(m.first_name), m.id
+            """;
 
     private final JdbcClient jdbc;
+    private final JdbcTemplate jdbcTemplate;
     private final CatalogService catalogService;
     private final MemberService memberService;
     private final AuditService auditService;
@@ -38,113 +74,84 @@ public class DataExchangeService {
 
     public DataExchangeService(
             JdbcClient jdbc,
+            JdbcTemplate jdbcTemplate,
             CatalogService catalogService,
             MemberService memberService,
             AuditService auditService,
             Validator validator
     ) {
         this.jdbc = jdbc;
+        this.jdbcTemplate = jdbcTemplate;
         this.catalogService = catalogService;
         this.memberService = memberService;
         this.auditService = auditService;
         this.validator = validator;
     }
 
+    @Transactional(readOnly = true)
     public String exportBooks() {
-        List<BookExportRow> rows = jdbc.sql("""
-                        SELECT b.title, b.subtitle, b.isbn13, b.description, b.language_code,
-                               b.publication_year, b.edition_label, p.name AS publisher_name,
-                               COALESCE((
-                                   SELECT string_agg(a.display_name, '|' ORDER BY ba.contribution_order)
-                                   FROM book_author ba
-                                   JOIN author a ON a.id = ba.author_id
-                                   WHERE ba.book_id = b.id
-                               ), '') AS authors,
-                               COALESCE((
-                                   SELECT string_agg(c.name, '|' ORDER BY c.name)
-                                   FROM book_category bc
-                                   JOIN category c ON c.id = bc.category_id
-                                   WHERE bc.book_id = b.id
-                               ), '') AS categories
-                        FROM book b
-                        LEFT JOIN publisher p ON p.id = b.publisher_id
-                        ORDER BY LOWER(b.title), b.id
-                        LIMIT :limit
-                        """)
-                .param("limit", MAX_EXPORT_ROWS + 1)
-                .query((rs, rowNum) -> new BookExportRow(
-                        rs.getString("title"),
-                        rs.getString("subtitle"),
-                        rs.getString("isbn13"),
-                        rs.getString("description"),
-                        rs.getString("language_code"),
-                        rs.getObject("publication_year", Integer.class),
-                        rs.getString("edition_label"),
-                        rs.getString("publisher_name"),
-                        rs.getString("authors"),
-                        rs.getString("categories")
-                ))
-                .list();
-        ensureExportBound(rows.size());
-
-        StringBuilder csv = new StringBuilder();
-        csv.append(CsvCodec.row(List.of(
-                "title", "subtitle", "isbn13", "description", "languageCode",
-                "publicationYear", "editionLabel", "publisherName", "authors", "categories"
-        )));
-        for (BookExportRow row : rows) {
-            csv.append(CsvCodec.row(List.of(
-                    nullToEmpty(row.title()), nullToEmpty(row.subtitle()), nullToEmpty(row.isbn13()),
-                    nullToEmpty(row.description()), nullToEmpty(row.languageCode()),
-                    row.publicationYear() == null ? "" : row.publicationYear().toString(),
-                    nullToEmpty(row.editionLabel()), nullToEmpty(row.publisherName()),
-                    nullToEmpty(row.authors()), nullToEmpty(row.categories())
-            )));
+        StringWriter csv = new StringWriter();
+        try {
+            writeBooksCsv(csv);
+        } catch (IOException exception) {
+            throw new IllegalStateException("String-backed CSV export failed unexpectedly.", exception);
         }
         return csv.toString();
     }
 
-    public String exportMembers() {
-        List<MemberExportRow> rows = jdbc.sql("""
-                        SELECT b.code AS branch_code, m.library_card_number, m.first_name, m.last_name,
-                               m.email, m.phone, m.status, m.joined_at, m.expires_at, m.notes
-                        FROM member m
-                        JOIN branch b ON b.id = m.home_branch_id
-                        ORDER BY LOWER(m.last_name), LOWER(m.first_name), m.id
-                        LIMIT :limit
-                        """)
-                .param("limit", MAX_EXPORT_ROWS + 1)
-                .query((rs, rowNum) -> new MemberExportRow(
-                        rs.getString("branch_code"),
-                        rs.getString("library_card_number"),
-                        rs.getString("first_name"),
-                        rs.getString("last_name"),
-                        rs.getString("email"),
-                        rs.getString("phone"),
-                        rs.getString("status"),
-                        rs.getObject("joined_at", OffsetDateTime.class),
-                        rs.getObject("expires_at", OffsetDateTime.class),
-                        rs.getString("notes")
-                ))
-                .list();
-        ensureExportBound(rows.size());
+    @Transactional(readOnly = true)
+    public void writeBooksCsv(Writer writer) throws IOException {
+        ensureBooksExportBound();
+        writer.write(CsvCodec.row(List.of(
+                "title", "subtitle", "isbn13", "description", "languageCode",
+                "publicationYear", "editionLabel", "publisherName", "authors", "categories"
+        )));
 
-        StringBuilder csv = new StringBuilder();
-        csv.append(CsvCodec.row(List.of(
+        streamQuery(BOOK_EXPORT_SQL, resultSet -> writer.write(CsvCodec.row(List.of(
+                nullToEmpty(resultSet.getString("title")),
+                nullToEmpty(resultSet.getString("subtitle")),
+                nullToEmpty(resultSet.getString("isbn13")),
+                nullToEmpty(resultSet.getString("description")),
+                nullToEmpty(resultSet.getString("language_code")),
+                integerToString(resultSet.getObject("publication_year", Integer.class)),
+                nullToEmpty(resultSet.getString("edition_label")),
+                nullToEmpty(resultSet.getString("publisher_name")),
+                nullToEmpty(resultSet.getString("authors")),
+                nullToEmpty(resultSet.getString("categories"))
+        ))));
+    }
+
+    @Transactional(readOnly = true)
+    public String exportMembers() {
+        StringWriter csv = new StringWriter();
+        try {
+            writeMembersCsv(csv);
+        } catch (IOException exception) {
+            throw new IllegalStateException("String-backed CSV export failed unexpectedly.", exception);
+        }
+        return csv.toString();
+    }
+
+    @Transactional(readOnly = true)
+    public void writeMembersCsv(Writer writer) throws IOException {
+        ensureMembersExportBound();
+        writer.write(CsvCodec.row(List.of(
                 "homeBranchCode", "libraryCardNumber", "firstName", "lastName", "email",
                 "phone", "status", "joinedAt", "expiresAt", "notes"
         )));
-        for (MemberExportRow row : rows) {
-            csv.append(CsvCodec.row(List.of(
-                    nullToEmpty(row.branchCode()), nullToEmpty(row.libraryCardNumber()),
-                    nullToEmpty(row.firstName()), nullToEmpty(row.lastName()), nullToEmpty(row.email()),
-                    nullToEmpty(row.phone()), nullToEmpty(row.status()),
-                    row.joinedAt() == null ? "" : row.joinedAt().toString(),
-                    row.expiresAt() == null ? "" : row.expiresAt().toString(),
-                    nullToEmpty(row.notes())
-            )));
-        }
-        return csv.toString();
+
+        streamQuery(MEMBER_EXPORT_SQL, resultSet -> writer.write(CsvCodec.row(List.of(
+                nullToEmpty(resultSet.getString("branch_code")),
+                nullToEmpty(resultSet.getString("library_card_number")),
+                nullToEmpty(resultSet.getString("first_name")),
+                nullToEmpty(resultSet.getString("last_name")),
+                nullToEmpty(resultSet.getString("email")),
+                nullToEmpty(resultSet.getString("phone")),
+                nullToEmpty(resultSet.getString("status")),
+                dateTimeToString(resultSet.getObject("joined_at", OffsetDateTime.class)),
+                dateTimeToString(resultSet.getObject("expires_at", OffsetDateTime.class)),
+                nullToEmpty(resultSet.getString("notes"))
+        ))));
     }
 
     @Transactional
@@ -272,6 +279,47 @@ public class DataExchangeService {
         return new ImportResult("members", state.imported, List.copyOf(state.warnings));
     }
 
+    private void ensureBooksExportBound() {
+        ensureExportBound(boundedRowCount("book"));
+    }
+
+    private void ensureMembersExportBound() {
+        ensureExportBound(boundedRowCount("member"));
+    }
+
+    private int boundedRowCount(String table) {
+        String sql = switch (table) {
+            case "book" -> "SELECT COUNT(*) FROM (SELECT 1 FROM book LIMIT 10001) bounded_rows";
+            case "member" -> "SELECT COUNT(*) FROM (SELECT 1 FROM member LIMIT 10001) bounded_rows";
+            default -> throw new IllegalArgumentException("Unsupported export table: " + table);
+        };
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
+        return count == null ? 0 : count;
+    }
+
+    private void streamQuery(String sql, ResultSetWriter rowWriter) throws IOException {
+        try {
+            jdbcTemplate.query(connection -> {
+                var statement = connection.prepareStatement(
+                        sql,
+                        ResultSet.TYPE_FORWARD_ONLY,
+                        ResultSet.CONCUR_READ_ONLY
+                );
+                statement.setFetchSize(EXPORT_FETCH_SIZE);
+                statement.setMaxRows(MAX_EXPORT_ROWS);
+                return statement;
+            }, resultSet -> {
+                try {
+                    rowWriter.write(resultSet);
+                } catch (IOException exception) {
+                    throw new UncheckedIOException(exception);
+                }
+            });
+        } catch (UncheckedIOException exception) {
+            throw exception.getCause();
+        }
+    }
+
     private static void requireHeaderRow(ImportState state) {
         if (state.headers == null) {
             throw ApiException.badRequest("csv_empty", "CSV must include a header row.");
@@ -378,37 +426,22 @@ public class DataExchangeService {
         return value == null ? "" : value;
     }
 
+    private static String integerToString(Integer value) {
+        return value == null ? "" : value.toString();
+    }
+
+    private static String dateTimeToString(OffsetDateTime value) {
+        return value == null ? "" : value.toString();
+    }
+
+    @FunctionalInterface
+    private interface ResultSetWriter {
+        void write(ResultSet resultSet) throws java.sql.SQLException, IOException;
+    }
+
     private static final class ImportState {
         private Map<String, Integer> headers;
         private int imported;
         private final List<String> warnings = new ArrayList<>();
-    }
-
-    private record BookExportRow(
-            String title,
-            String subtitle,
-            String isbn13,
-            String description,
-            String languageCode,
-            Integer publicationYear,
-            String editionLabel,
-            String publisherName,
-            String authors,
-            String categories
-    ) {
-    }
-
-    private record MemberExportRow(
-            String branchCode,
-            String libraryCardNumber,
-            String firstName,
-            String lastName,
-            String email,
-            String phone,
-            String status,
-            OffsetDateTime joinedAt,
-            OffsetDateTime expiresAt,
-            String notes
-    ) {
     }
 }
