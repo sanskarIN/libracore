@@ -13,11 +13,15 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 
@@ -34,13 +38,21 @@ public class DataExchangeController {
     }
 
     @PostMapping(value = "/books/export", produces = "text/csv")
-    public ResponseEntity<String> exportBooks() {
-        return csvResponse("libracore-books.csv", dataExchangeService.exportBooks());
+    public ResponseEntity<StreamingResponseBody> exportBooks() {
+        return csvResponse("libracore-books.csv", outputStream -> {
+            Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+            dataExchangeService.writeBooksCsv(writer);
+            writer.flush();
+        });
     }
 
     @PostMapping(value = "/members/export", produces = "text/csv")
-    public ResponseEntity<String> exportMembers() {
-        return csvResponse("libracore-members.csv", dataExchangeService.exportMembers());
+    public ResponseEntity<StreamingResponseBody> exportMembers() {
+        return csvResponse("libracore-members.csv", outputStream -> {
+            Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+            dataExchangeService.writeMembersCsv(writer);
+            writer.flush();
+        });
     }
 
     @PostMapping(value = "/books/import", consumes = "text/csv", produces = "application/json")
@@ -70,7 +82,7 @@ public class DataExchangeController {
         }
     }
 
-    private static ResponseEntity<String> csvResponse(String filename, String content) {
+    private static ResponseEntity<StreamingResponseBody> csvResponse(String filename, StreamingResponseBody content) {
         ContentDisposition disposition = ContentDisposition.attachment()
                 .filename(filename, StandardCharsets.UTF_8)
                 .build();
