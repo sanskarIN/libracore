@@ -42,6 +42,12 @@ management:
   endpoint:
     health:
       show-details: never
+  health:
+    # MOCK is the default notification mode, so an unavailable local SMTP server
+    # must not make the application unhealthy. SMTP deployments can explicitly
+    # opt into connectivity health with APP_MAIL_HEALTH_ENABLED=true.
+    mail:
+      enabled: ${APP_MAIL_HEALTH_ENABLED:false}
 
 app:
   cors:

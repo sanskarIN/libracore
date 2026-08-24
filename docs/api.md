@@ -62,7 +62,18 @@ Member data access is role/ownership sensitive and must not be inferred from fro
 
 ## Data exchange
 
-The exchange module provides authorized CSV import/export operations. CSV is an interoperability feature, not a backup substitute. Imports are bounded and validated before durable writes.
+The exchange module is restricted to `ADMIN` and `LIBRARIAN` roles and provides:
+
+- `POST /api/exchange/books/export` — stream the authorized book export as UTF-8 CSV.
+- `POST /api/exchange/members/export` — stream the authorized member export as UTF-8 CSV.
+- `POST /api/exchange/books/import` — consume a UTF-8 `text/csv` book import.
+- `POST /api/exchange/members/import` — consume a UTF-8 `text/csv` member import.
+
+CSV is an interoperability feature, not a backup substitute. Import parsing is incremental and bounded to 2,000,000 decoded characters, 10,000 rows, 64 columns per row, and 20,000 characters per cell. Malformed UTF-8, NUL characters, invalid quoting, duplicate/missing required headers, and domain-validation failures are rejected with stable API errors.
+
+Book and member exports are capped at 10,000 records. Accepted exports stream database rows directly to the HTTP response instead of retaining the whole dataset in application memory.
+
+To reduce spreadsheet formula-injection risk, exported cell values whose first meaningful character is `=`, `+`, `-`, `@`, tab, carriage return, or line feed are prefixed with an apostrophe. This is an export-only safety representation; import values are not silently rewritten by the same rule.
 
 ## Errors
 

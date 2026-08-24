@@ -86,3 +86,12 @@ jobs:
       - name: Print application log on failure
         if: failure()
         run: cat /tmp/libracore-backend.log || true
+
+      - name: Preserve application log on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-startup-log
+          path: /tmp/libracore-backend.log
+          if-no-files-found: warn
+          retention-days: 3

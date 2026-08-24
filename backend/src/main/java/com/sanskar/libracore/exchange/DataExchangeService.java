@@ -9,10 +9,18 @@ import com.sanskar.libracore.member.MemberModels.CreateMemberRequest;
 import com.sanskar.libracore.member.MemberService;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
+import java.io.Writer;
+import java.sql.ResultSet;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,8 +35,38 @@ import java.util.UUID;
 @Service
 public class DataExchangeService {
     private static final int MAX_EXPORT_ROWS = 10_000;
+    private static final int EXPORT_FETCH_SIZE = 250;
+
+    private static final String BOOK_EXPORT_SQL = """
+            SELECT b.title, b.subtitle, b.isbn13, b.description, b.language_code,
+                   b.publication_year, b.edition_label, p.name AS publisher_name,
+                   COALESCE((
+                       SELECT string_agg(a.display_name, '|' ORDER BY ba.contribution_order)
+                       FROM book_author ba
+                       JOIN author a ON a.id = ba.author_id
+                       WHERE ba.book_id = b.id
+                   ), '') AS authors,
+                   COALESCE((
+                       SELECT string_agg(c.name, '|' ORDER BY c.name)
+                       FROM book_category bc
+                       JOIN category c ON c.id = bc.category_id
+                       WHERE bc.book_id = b.id
+                   ), '') AS categories
+            FROM book b
+            LEFT JOIN publisher p ON p.id = b.publisher_id
+            ORDER BY LOWER(b.title), b.id
+            """;
+
+    private static final String MEMBER_EXPORT_SQL = """
+            SELECT b.code AS branch_code, m.library_card_number, m.first_name, m.last_name,
+                   m.email, m.phone, m.status, m.joined_at, m.expires_at, m.notes
+            FROM member m
+            JOIN branch b ON b.id = m.home_branch_id
+            ORDER BY LOWER(m.last_name), LOWER(m.first_name), m.id
+            """;
 
     private final JdbcClient jdbc;
+    private final JdbcTemplate jdbcTemplate;
     private final CatalogService catalogService;
     private final MemberService memberService;
     private final AuditService auditService;
@@ -36,197 +74,187 @@ public class DataExchangeService {
 
     public DataExchangeService(
             JdbcClient jdbc,
+            JdbcTemplate jdbcTemplate,
             CatalogService catalogService,
             MemberService memberService,
             AuditService auditService,
             Validator validator
     ) {
         this.jdbc = jdbc;
+        this.jdbcTemplate = jdbcTemplate;
         this.catalogService = catalogService;
         this.memberService = memberService;
         this.auditService = auditService;
         this.validator = validator;
     }
 
+    @Transactional(readOnly = true)
     public String exportBooks() {
-        List<BookExportRow> rows = jdbc.sql("""
-                        SELECT b.title, b.subtitle, b.isbn13, b.description, b.language_code,
-                               b.publication_year, b.edition_label, p.name AS publisher_name,
-                               COALESCE((
-                                   SELECT string_agg(a.display_name, '|' ORDER BY ba.contribution_order)
-                                   FROM book_author ba
-                                   JOIN author a ON a.id = ba.author_id
-                                   WHERE ba.book_id = b.id
-                               ), '') AS authors,
-                               COALESCE((
-                                   SELECT string_agg(c.name, '|' ORDER BY c.name)
-                                   FROM book_category bc
-                                   JOIN category c ON c.id = bc.category_id
-                                   WHERE bc.book_id = b.id
-                               ), '') AS categories
-                        FROM book b
-                        LEFT JOIN publisher p ON p.id = b.publisher_id
-                        ORDER BY LOWER(b.title), b.id
-                        LIMIT :limit
-                        """)
-                .param("limit", MAX_EXPORT_ROWS + 1)
-                .query((rs, rowNum) -> new BookExportRow(
-                        rs.getString("title"),
-                        rs.getString("subtitle"),
-                        rs.getString("isbn13"),
-                        rs.getString("description"),
-                        rs.getString("language_code"),
-                        rs.getObject("publication_year", Integer.class),
-                        rs.getString("edition_label"),
-                        rs.getString("publisher_name"),
-                        rs.getString("authors"),
-                        rs.getString("categories")
-                ))
-                .list();
-        ensureExportBound(rows.size());
-
-        StringBuilder csv = new StringBuilder();
-        csv.append(CsvCodec.row(List.of(
-                "title", "subtitle", "isbn13", "description", "languageCode",
-                "publicationYear", "editionLabel", "publisherName", "authors", "categories"
-        )));
-        for (BookExportRow row : rows) {
-            csv.append(CsvCodec.row(List.of(
-                    nullToEmpty(row.title()), nullToEmpty(row.subtitle()), nullToEmpty(row.isbn13()),
-                    nullToEmpty(row.description()), nullToEmpty(row.languageCode()),
-                    row.publicationYear() == null ? "" : row.publicationYear().toString(),
-                    nullToEmpty(row.editionLabel()), nullToEmpty(row.publisherName()),
-                    nullToEmpty(row.authors()), nullToEmpty(row.categories())
-            )));
+        StringWriter csv = new StringWriter();
+        try {
+            writeBooksCsv(csv);
+        } catch (IOException exception) {
+            throw new IllegalStateException("String-backed CSV export failed unexpectedly.", exception);
         }
         return csv.toString();
     }
 
-    public String exportMembers() {
-        List<MemberExportRow> rows = jdbc.sql("""
-                        SELECT b.code AS branch_code, m.library_card_number, m.first_name, m.last_name,
-                               m.email, m.phone, m.status, m.joined_at, m.expires_at, m.notes
-                        FROM member m
-                        JOIN branch b ON b.id = m.home_branch_id
-                        ORDER BY LOWER(m.last_name), LOWER(m.first_name), m.id
-                        LIMIT :limit
-                        """)
-                .param("limit", MAX_EXPORT_ROWS + 1)
-                .query((rs, rowNum) -> new MemberExportRow(
-                        rs.getString("branch_code"),
-                        rs.getString("library_card_number"),
-                        rs.getString("first_name"),
-                        rs.getString("last_name"),
-                        rs.getString("email"),
-                        rs.getString("phone"),
-                        rs.getString("status"),
-                        rs.getObject("joined_at", OffsetDateTime.class),
-                        rs.getObject("expires_at", OffsetDateTime.class),
-                        rs.getString("notes")
-                ))
-                .list();
-        ensureExportBound(rows.size());
+    @Transactional(readOnly = true)
+    public void writeBooksCsv(Writer writer) throws IOException {
+        ensureBooksExportBound();
+        writer.write(CsvCodec.spreadsheetSafeRow(List.of(
+                "title", "subtitle", "isbn13", "description", "languageCode",
+                "publicationYear", "editionLabel", "publisherName", "authors", "categories"
+        )));
 
-        StringBuilder csv = new StringBuilder();
-        csv.append(CsvCodec.row(List.of(
+        streamQuery(BOOK_EXPORT_SQL, resultSet -> writer.write(CsvCodec.spreadsheetSafeRow(List.of(
+                nullToEmpty(resultSet.getString("title")),
+                nullToEmpty(resultSet.getString("subtitle")),
+                nullToEmpty(resultSet.getString("isbn13")),
+                nullToEmpty(resultSet.getString("description")),
+                nullToEmpty(resultSet.getString("language_code")),
+                integerToString(resultSet.getObject("publication_year", Integer.class)),
+                nullToEmpty(resultSet.getString("edition_label")),
+                nullToEmpty(resultSet.getString("publisher_name")),
+                nullToEmpty(resultSet.getString("authors")),
+                nullToEmpty(resultSet.getString("categories"))
+        ))));
+    }
+
+    @Transactional(readOnly = true)
+    public String exportMembers() {
+        StringWriter csv = new StringWriter();
+        try {
+            writeMembersCsv(csv);
+        } catch (IOException exception) {
+            throw new IllegalStateException("String-backed CSV export failed unexpectedly.", exception);
+        }
+        return csv.toString();
+    }
+
+    @Transactional(readOnly = true)
+    public void writeMembersCsv(Writer writer) throws IOException {
+        ensureMembersExportBound();
+        writer.write(CsvCodec.spreadsheetSafeRow(List.of(
                 "homeBranchCode", "libraryCardNumber", "firstName", "lastName", "email",
                 "phone", "status", "joinedAt", "expiresAt", "notes"
         )));
-        for (MemberExportRow row : rows) {
-            csv.append(CsvCodec.row(List.of(
-                    nullToEmpty(row.branchCode()), nullToEmpty(row.libraryCardNumber()),
-                    nullToEmpty(row.firstName()), nullToEmpty(row.lastName()), nullToEmpty(row.email()),
-                    nullToEmpty(row.phone()), nullToEmpty(row.status()),
-                    row.joinedAt() == null ? "" : row.joinedAt().toString(),
-                    row.expiresAt() == null ? "" : row.expiresAt().toString(),
-                    nullToEmpty(row.notes())
-            )));
-        }
-        return csv.toString();
+
+        streamQuery(MEMBER_EXPORT_SQL, resultSet -> writer.write(CsvCodec.spreadsheetSafeRow(List.of(
+                nullToEmpty(resultSet.getString("branch_code")),
+                nullToEmpty(resultSet.getString("library_card_number")),
+                nullToEmpty(resultSet.getString("first_name")),
+                nullToEmpty(resultSet.getString("last_name")),
+                nullToEmpty(resultSet.getString("email")),
+                nullToEmpty(resultSet.getString("phone")),
+                nullToEmpty(resultSet.getString("status")),
+                dateTimeToString(resultSet.getObject("joined_at", OffsetDateTime.class)),
+                dateTimeToString(resultSet.getObject("expires_at", OffsetDateTime.class)),
+                nullToEmpty(resultSet.getString("notes"))
+        ))));
     }
 
     @Transactional
     public ImportResult importBooks(String csv, UUID actorUserId) {
-        List<List<String>> rows = CsvCodec.parse(csv);
-        if (rows.isEmpty()) {
-            throw ApiException.badRequest("csv_empty", "CSV must include a header row.");
+        if (csv == null) {
+            throw ApiException.badRequest("csv_missing", "CSV content is required.");
         }
-        Map<String, Integer> headers = headers(rows.getFirst());
-        requireHeaders(headers, "title");
+        return importBooks(new StringReader(csv), actorUserId);
+    }
 
-        int imported = 0;
-        List<String> warnings = new ArrayList<>();
-        for (int index = 1; index < rows.size(); index++) {
-            List<String> row = rows.get(index);
-            if (row.stream().allMatch(String::isBlank)) {
-                continue;
+    @Transactional
+    public ImportResult importBooks(Reader csv, UUID actorUserId) {
+        ImportState state = new ImportState();
+        CsvCodec.forEachRow(csv, (csvRow, row) -> {
+            if (state.headers == null) {
+                state.headers = headers(row);
+                requireHeaders(state.headers, "title");
+                return;
             }
-            String title = value(row, headers, "title");
-            Integer publicationYear = parseIntegerNullable(value(row, headers, "publicationyear"), index + 1, "publicationYear");
-            String languageCode = value(row, headers, "languagecode");
+            if (row.stream().allMatch(String::isBlank)) {
+                return;
+            }
+
+            String title = value(row, state.headers, "title");
+            Integer publicationYear = parseIntegerNullable(
+                    value(row, state.headers, "publicationyear"),
+                    csvRow,
+                    "publicationYear"
+            );
+            String languageCode = value(row, state.headers, "languagecode");
             if (languageCode.isBlank()) {
                 languageCode = "en";
             }
 
             CreateBookRequest request = new CreateBookRequest(
                     title,
-                    blankToNull(value(row, headers, "subtitle")),
-                    blankToNull(value(row, headers, "isbn13")),
-                    blankToNull(value(row, headers, "description")),
+                    blankToNull(value(row, state.headers, "subtitle")),
+                    blankToNull(value(row, state.headers, "isbn13")),
+                    blankToNull(value(row, state.headers, "description")),
                     languageCode,
                     publicationYear,
-                    blankToNull(value(row, headers, "editionlabel")),
-                    blankToNull(value(row, headers, "publishername")),
-                    splitPipe(value(row, headers, "authors")),
-                    splitPipe(value(row, headers, "categories"))
+                    blankToNull(value(row, state.headers, "editionlabel")),
+                    blankToNull(value(row, state.headers, "publishername")),
+                    splitPipe(value(row, state.headers, "authors")),
+                    splitPipe(value(row, state.headers, "categories"))
             );
-            validateRequest(request, index + 1);
+            validateRequest(request, csvRow);
             try {
                 catalogService.createBook(request, actorUserId);
             } catch (ApiException exception) {
-                throw rowError(index + 1, exception.getMessage());
+                throw rowError(csvRow, exception.getMessage());
             }
-            imported++;
-        }
+            state.imported++;
+        });
+
+        requireHeaderRow(state);
         auditService.success(actorUserId, "CSV_IMPORT_BOOKS", "BOOK", null, null,
-                "{\"rows\":" + imported + "}");
-        return new ImportResult("books", imported, List.copyOf(warnings));
+                "{\"rows\":" + state.imported + "}");
+        return new ImportResult("books", state.imported, List.copyOf(state.warnings));
     }
 
     @Transactional
     public ImportResult importMembers(String csv, UUID actorUserId) {
-        List<List<String>> rows = CsvCodec.parse(csv);
-        if (rows.isEmpty()) {
-            throw ApiException.badRequest("csv_empty", "CSV must include a header row.");
+        if (csv == null) {
+            throw ApiException.badRequest("csv_missing", "CSV content is required.");
         }
-        Map<String, Integer> headers = headers(rows.getFirst());
-        requireHeaders(headers, "homebranchcode", "librarycardnumber", "firstname", "lastname", "email");
+        return importMembers(new StringReader(csv), actorUserId);
+    }
 
-        int imported = 0;
-        List<String> warnings = new ArrayList<>();
-        for (int index = 1; index < rows.size(); index++) {
-            int csvRow = index + 1;
-            List<String> row = rows.get(index);
-            if (row.stream().allMatch(String::isBlank)) {
-                continue;
+    @Transactional
+    public ImportResult importMembers(Reader csv, UUID actorUserId) {
+        ImportState state = new ImportState();
+        CsvCodec.forEachRow(csv, (csvRow, row) -> {
+            if (state.headers == null) {
+                state.headers = headers(row);
+                requireHeaders(state.headers, "homebranchcode", "librarycardnumber", "firstname", "lastname", "email");
+                return;
             }
-            String branchCode = value(row, headers, "homebranchcode").trim().toUpperCase(Locale.ROOT);
+            if (row.stream().allMatch(String::isBlank)) {
+                return;
+            }
+
+            String branchCode = value(row, state.headers, "homebranchcode").trim().toUpperCase(Locale.ROOT);
             UUID branchId = jdbc.sql("SELECT id FROM branch WHERE code = :code AND active = TRUE")
                     .param("code", branchCode)
                     .query(UUID.class)
                     .optional()
                     .orElseThrow(() -> rowError(csvRow, "homeBranchCode does not match an active branch"));
 
-            OffsetDateTime expiresAt = parseDateTimeNullable(value(row, headers, "expiresat"), csvRow, "expiresAt");
+            OffsetDateTime expiresAt = parseDateTimeNullable(
+                    value(row, state.headers, "expiresat"),
+                    csvRow,
+                    "expiresAt"
+            );
             CreateMemberRequest request = new CreateMemberRequest(
                     branchId,
-                    value(row, headers, "librarycardnumber"),
-                    value(row, headers, "firstname"),
-                    value(row, headers, "lastname"),
-                    value(row, headers, "email"),
-                    blankToNull(value(row, headers, "phone")),
+                    value(row, state.headers, "librarycardnumber"),
+                    value(row, state.headers, "firstname"),
+                    value(row, state.headers, "lastname"),
+                    value(row, state.headers, "email"),
+                    blankToNull(value(row, state.headers, "phone")),
                     expiresAt,
-                    blankToNull(value(row, headers, "notes")),
+                    blankToNull(value(row, state.headers, "notes")),
                     null
             );
             validateRequest(request, csvRow);
@@ -235,18 +263,67 @@ public class DataExchangeService {
             } catch (ApiException exception) {
                 throw rowError(csvRow, exception.getMessage());
             }
-            String requestedStatus = value(row, headers, "status").trim().toUpperCase(Locale.ROOT);
+            String requestedStatus = value(row, state.headers, "status").trim().toUpperCase(Locale.ROOT);
             if (!requestedStatus.isBlank() && !"ACTIVE".equals(requestedStatus)) {
                 if (!List.of("SUSPENDED", "CLOSED").contains(requestedStatus)) {
                     throw rowError(csvRow, "status must be ACTIVE, SUSPENDED, or CLOSED");
                 }
-                warnings.add("Row " + csvRow + ": imported as ACTIVE; change status through the member lifecycle API after review.");
+                state.warnings.add("Row " + csvRow + ": imported as ACTIVE; change status through the member lifecycle API after review.");
             }
-            imported++;
-        }
+            state.imported++;
+        });
+
+        requireHeaderRow(state);
         auditService.success(actorUserId, "CSV_IMPORT_MEMBERS", "MEMBER", null, null,
-                "{\"rows\":" + imported + "}");
-        return new ImportResult("members", imported, List.copyOf(warnings));
+                "{\"rows\":" + state.imported + "}");
+        return new ImportResult("members", state.imported, List.copyOf(state.warnings));
+    }
+
+    private void ensureBooksExportBound() {
+        ensureExportBound(boundedRowCount("book"));
+    }
+
+    private void ensureMembersExportBound() {
+        ensureExportBound(boundedRowCount("member"));
+    }
+
+    private int boundedRowCount(String table) {
+        String sql = switch (table) {
+            case "book" -> "SELECT COUNT(*) FROM (SELECT 1 FROM book LIMIT 10001) bounded_rows";
+            case "member" -> "SELECT COUNT(*) FROM (SELECT 1 FROM member LIMIT 10001) bounded_rows";
+            default -> throw new IllegalArgumentException("Unsupported export table: " + table);
+        };
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
+        return count == null ? 0 : count;
+    }
+
+    private void streamQuery(String sql, ResultSetWriter rowWriter) throws IOException {
+        try {
+            jdbcTemplate.query(connection -> {
+                var statement = connection.prepareStatement(
+                        sql,
+                        ResultSet.TYPE_FORWARD_ONLY,
+                        ResultSet.CONCUR_READ_ONLY
+                );
+                statement.setFetchSize(EXPORT_FETCH_SIZE);
+                statement.setMaxRows(MAX_EXPORT_ROWS);
+                return statement;
+            }, resultSet -> {
+                try {
+                    rowWriter.write(resultSet);
+                } catch (IOException exception) {
+                    throw new UncheckedIOException(exception);
+                }
+            });
+        } catch (UncheckedIOException exception) {
+            throw exception.getCause();
+        }
+    }
+
+    private static void requireHeaderRow(ImportState state) {
+        if (state.headers == null) {
+            throw ApiException.badRequest("csv_empty", "CSV must include a header row.");
+        }
     }
 
     private <T> void validateRequest(T request, int row) {
@@ -349,31 +426,22 @@ public class DataExchangeService {
         return value == null ? "" : value;
     }
 
-    private record BookExportRow(
-            String title,
-            String subtitle,
-            String isbn13,
-            String description,
-            String languageCode,
-            Integer publicationYear,
-            String editionLabel,
-            String publisherName,
-            String authors,
-            String categories
-    ) {
+    private static String integerToString(Integer value) {
+        return value == null ? "" : value.toString();
     }
 
-    private record MemberExportRow(
-            String branchCode,
-            String libraryCardNumber,
-            String firstName,
-            String lastName,
-            String email,
-            String phone,
-            String status,
-            OffsetDateTime joinedAt,
-            OffsetDateTime expiresAt,
-            String notes
-    ) {
+    private static String dateTimeToString(OffsetDateTime value) {
+        return value == null ? "" : value.toString();
+    }
+
+    @FunctionalInterface
+    private interface ResultSetWriter {
+        void write(ResultSet resultSet) throws java.sql.SQLException, IOException;
+    }
+
+    private static final class ImportState {
+        private Map<String, Integer> headers;
+        private int imported;
+        private final List<String> warnings = new ArrayList<>();
     }
 }
