@@ -6,37 +6,35 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 ### Release hardening
 
-- Fixed the Frontend Lockfile Bootstrap workflow so the first generated, untracked `frontend/package-lock.json` is detected and committed instead of being missed by `git diff --quiet`.
-- Preserve the generated frontend lockfile as a short-lived Actions artifact before later verification so a failing quality gate does not discard useful dependency-state evidence.
-- Cancel superseded Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and lockfile-bootstrap runs to reduce stale verification and runner waste.
-- The tagged release workflow now starts the packaged backend JAR against PostgreSQL and requires a healthy `/actuator/health` response before publication.
-- Added an automated Recovery Drill that migrates a disposable PostgreSQL source database, runs the repository backup/restore scripts, validates checksum/schema/data restoration, and health-checks the packaged backend against the restored database.
-- Upgraded supported GitHub Actions runtime lines across the repository: `actions/checkout@v7`, `actions/setup-node@v7`, `actions/upload-artifact@v7`, `actions/dependency-review-action@v5`, and `softprops/action-gh-release@v3`; `actions/setup-java@v5` remains on its stable production line.
-- Disabled persisted checkout credentials in read-only Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, Recovery Drill, and release source checkout; the lockfile bootstrap intentionally retains credentials because it must push the generated lockfile.
-- Added `.github/CODEOWNERS` with explicit ownership of CI/release, security, Flyway migration, and recovery-sensitive paths.
-- Closed the superseded GitHub Actions Dependabot PRs after absorbing their supported upgrades directly into the hardened workflows.
-- Deferred TypeScript 7 and Node 26 type-definition major upgrades from the 2.0.12 stabilization line while continuing to allow normal non-major dependency updates.
-- Release documentation and the roadmap now distinguish workflow/configuration evidence from final release-commit evidence.
-
-### Fixed
-
-- Fixed strict `exactOptionalPropertyTypes` failures in the frontend API client by representing the optional correlation ID explicitly as `string | undefined` and omitting POST request bodies instead of assigning `body: undefined`.
-- Added API regression coverage for optional correlation identifiers.
-
-### Verification evidence
-
-- A temporary same-repository probe completed CodeQL successfully for both Java/Kotlin and JavaScript/TypeScript.
-- The hosted lockfile bootstrap successfully generated the npm lockfile and completed `npm ci`; the first executable frontend failure was isolated to two strict TypeScript errors in `frontend/src/api.ts`.
-- After those strict TypeScript errors were fixed, the hosted bootstrap rerun completed lockfile generation, reproducible installation, lint, strict typecheck, Vitest, production build, artifact upload, and lockfile commit successfully.
-- The real npm-generated `frontend/package-lock.json` is committed in `89d1c833` and is now the canonical resolved frontend dependency graph for 2.0.12.
-- Draft PR #11 is the disposable current-source verification harness for Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill; it must not be merged.
+- Rebased the executable frontend/backend release manifests onto the `0.1.1` release line.
+- Retained the committed npm-generated frontend lockfile as the canonical dependency graph; a lockfile regeneration is required if dependency metadata changes.
+- Keep release publication fail-closed on version mismatch, missing lockfile, backend verification, packaged-service health, frontend quality, security, and recovery evidence.
+- Continue using the automated PostgreSQL Recovery Drill to validate the real backup/restore path and packaged backend startup against restored data.
 
 ### Release gates
 
-- Observe successful Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill on the current release-verification source.
+- Complete current Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill evidence on the intended release source.
 - Complete role-based browser smoke and manual accessibility evidence.
 - Enable `main` branch protection/code-owner enforcement after stable required-check names are confirmed.
-- Tag and publish `v2.0.12` only after every pre-tag gate is closed.
+- Create and publish `v0.1.1` only after every release-blocking gate is closed.
+
+## [0.1.1] - 2026-09-03 — release candidate
+
+### Changed
+
+- Rebased the backend Maven version from `2.0.12` to `0.1.1`.
+- Rebased the frontend npm package version from `2.0.12` to `0.1.1`.
+- Updated the documented release process to use `v0.1.1`.
+
+### Verification
+
+- The existing release workflow previously demonstrated that tag/manifest validation is active by rejecting `v1.0.0` when source manifests still declared `2.0.12`.
+- The new `0.1.1` release line must still pass the complete tag-triggered release workflow before publication.
+
+### Release status
+
+- `v0.1.1` is a release candidate until the complete release gates pass.
+- No claim of a published stable `v0.1.1` release should be made until the GitHub release workflow succeeds.
 
 ## [2.0.12] - 2026-08-19 — release candidate
 
@@ -63,12 +61,12 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 ### Changed
 
-- Backend Maven and frontend npm package versions are now `2.0.12`.
+- Backend Maven and frontend npm package versions were previously aligned to `2.0.12`; the active release line is now `0.1.1`.
 - The Settings page derives its displayed web version from build-time package metadata rather than a hard-coded value.
 - Frontend CI is read-only and requires a committed lockfile for reproducible `npm ci` verification.
 - Release automation validates tag/manifest consistency before packaging.
 - Release and backend CI discover the packaged backend JAR without embedding a historical version in workflow source.
-- README, release process, and roadmap now describe the 2.0.12 release-candidate line and its remaining gates.
+- README, release process, and roadmap previously described the 2.0.12 release-candidate line; the release process is now rebaselined for 0.1.1.
 
 ### Fixed
 
@@ -86,8 +84,6 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 - Documented trust boundaries, residual risks, private vulnerability reporting, privacy responsibilities, production boundaries, and branch-protection expectations.
 - Release verification refuses to publish without the committed frontend dependency lockfile.
 
-> `2.0.12` is prepared in source but must not be treated as a published stable release until the explicit gates in `what_changed.md` and `ROADMAP.md` are closed and `v2.0.12` is tagged.
-
 ## [0.1.0] - 2026-08-19
 
 ### Added
@@ -96,5 +92,7 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 - PostgreSQL development environment, initial schema, and core library domain model.
 - Core catalog, member, circulation, security, reporting, exchange, and notification modules.
 
-[Unreleased]: https://github.com/sanskarIN/libracore/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/sanskarIN/libracore/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/sanskarIN/libracore/releases/tag/v0.1.1
+[2.0.12]: https://github.com/sanskarIN/libracore/releases/tag/v2.0.12
 [0.1.0]: https://github.com/sanskarIN/libracore/releases/tag/v0.1.0
