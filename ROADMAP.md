@@ -2,22 +2,29 @@
 
 The roadmap describes direction, not a promise that an unchecked item already exists. `what_changed.md` is the implementation handoff and `CHANGELOG.md` records delivered behavior.
 
-## 1.1.3 — Maintenance release closure
+## 1.1.4 — Maintenance release closure
 
 - [x] Preserve the published `v1.0.0`, `v1.1.0`, `v1.1.1`, and `v1.1.2` history.
-- [x] Advance the backend executable manifest to `1.1.3`.
-- [x] Advance the frontend executable manifest to `1.1.3`.
-- [x] Add repository-managed `v1.1.3` release notes.
-- [ ] Synchronize and commit `frontend/package-lock.json` using the supported npm toolchain.
+- [x] Advance the backend executable manifest to `1.1.4`.
+- [x] Advance the frontend executable manifest to `1.1.4`.
+- [x] Add repository-managed `v1.1.4` release notes.
+- [x] Harden the packaged-backend health gate after the v1.1.3 tagged run failed during startup health verification.
+- [x] Make release-note selection derive from the pushed tag.
+- [x] Automate frontend lockfile synchronization after manifest changes on `main`.
+- [ ] Synchronize and commit `frontend/package-lock.json` with version `1.1.4` using the supported npm toolchain.
 - [ ] Observe successful Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill on the exact final source; fix every failure.
 - [ ] Complete role-based browser smoke testing and accessibility evidence.
 - [ ] Review repository links, configuration, tracked secrets, and release artifacts.
-- [ ] Run `node scripts/check-version.mjs 1.1.3` against the exact final checkout.
-- [ ] Tag and publish `v1.1.3` only after every release gate above is closed.
+- [ ] Run `node scripts/check-version.mjs 1.1.4` against the exact final release checkout.
+- [ ] Tag and publish `v1.1.4` only after every release gate above is closed.
 
 ## Published 1.1.2 release line
 
-The repository's `v1.1.2` release is published and remains immutable. The next release target is `v1.1.3`; do not rewrite or force-move any existing stable tag.
+The repository's `v1.1.2` release is published and remains immutable. The attempted `v1.1.3` release line is retained for auditability; `v1.1.4` is the current maintenance target.
+
+## Historical 1.1.3 release line
+
+The repository prepared and tagged `v1.1.3`, but its release workflow failed during packaged backend health verification. The source, tag, and failed workflow evidence must remain intact and must not be rewritten.
 
 ## Historical 1.1.1 release line
 
