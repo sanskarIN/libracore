@@ -27,7 +27,7 @@ All commits use `Sanskar <sanskarin@outlook.in>`.
 
 ## v1.1.3 diagnostic record
 
-The existing `v1.1.3` tag triggered release workflow run `33748921280` from source commit `275782d1d735aa8fedd8bb98c06dc019fbb95e4d`. The job successfully checked out the tag, validated the release version, packaged the backend, and started the packaged service, but failed at `Verify packaged backend health`; later release steps were skipped. The failure is retained as diagnostic evidence rather than rewritten. citehttps://api.github.com/repos/sanskarIN/libracore/actions/runs/33748921280/jobs?per_page=100
+The existing `v1.1.3` tag triggered release workflow run `33748921280` from source commit `275782d1d735aa8fedd8bb98c06dc019fbb95e4d`. The job successfully checked out the tag, validated the release version, packaged the backend, and started the packaged service, but failed at `Verify packaged backend health`; later release steps were skipped. The failure is retained as diagnostic evidence rather than rewritten.
 
 ## Manifest and lockfile state
 
