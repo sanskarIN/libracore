@@ -1,6 +1,11 @@
 name: Frontend Lockfile Bootstrap
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/package.json'
+      - '.github/workflows/lockfile-bootstrap.yml'
   workflow_dispatch:
 
 permissions:
@@ -56,5 +61,6 @@ jobs:
           git config user.name "Sanskar"
           git config user.email "sanskarin@outlook.in"
           git add frontend/package-lock.json
-          git commit -m "build: lock frontend dependencies for 2.0.12"
+          version="$(node -p "require('./frontend/package.json').version")"
+          git commit -m "build: synchronize frontend lockfile for ${version}"
           git push origin HEAD:main
