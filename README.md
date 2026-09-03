@@ -2,7 +2,7 @@
 
 **Production-minded, open-source library management for cataloging, circulation, members, branches, policy, reporting, and auditability.**
 
-> Current release candidate: **2.0.12**
+> Current release candidate: **0.1.1**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-sanskarIN-FFDD00?logo=buy-me-a-coffee&logoColor=000000)](https://buymeacoffee.com/sanskarIN)
@@ -17,9 +17,9 @@ The project intentionally favors explicit business rules, database migrations, d
 
 ## Status
 
-The executable backend and frontend manifests are aligned to **2.0.12**. The real npm-generated `frontend/package-lock.json` is committed, and the hosted lockfile-bootstrap verification has successfully completed reproducible installation, linting, strict type checking, tests, and the production frontend build. `what_changed.md` is the canonical continuation/handoff document and records completed work, verification evidence, limitations, recent commits, and the next exact tasks. A version value in source does not by itself mean that the corresponding GitHub release has passed every release gate.
+The executable backend and frontend manifests are aligned to **0.1.1**. The real npm-generated `frontend/package-lock.json` is committed, but its root package metadata still needs regeneration for the new `0.1.1` manifest before the final release tag. `what_changed.md` is the canonical continuation/handoff document and records completed work, verification evidence, limitations, recent commits, and the next exact release tasks. A version value in source does not by itself mean that the corresponding GitHub release has passed every release gate.
 
-The remaining 2.0.12 gates are final CI/security evidence on the intended source, clean backend/database and recovery verification, role/accessibility smoke evidence, and repository branch-protection enforcement. Do not infer a published stable release until those gates are closed and `v2.0.12` is tagged.
+The current 0.1.1 gates are generated-lockfile closure, current CI/security/recovery evidence, role-based smoke testing, accessibility evidence, and repository branch-protection enforcement. Do not infer a published stable release until those gates are closed and `v0.1.1` is tagged and successfully processed by release automation.
 
 ## Feature map
 
@@ -150,7 +150,7 @@ npm run dev
 
 Default development UI: `http://localhost:5173`.
 
-> `frontend/package-lock.json` is committed and is the canonical resolved frontend dependency graph for 2.0.12. Use `npm ci` for clean/reproducible installs. Use `npm install` only when intentionally changing dependency declarations and review the resulting lockfile diff together with `package.json`.
+> `frontend/package-lock.json` is committed and is the canonical resolved frontend dependency graph. Before final `v0.1.1` tagging, regenerate it with the supported Node/npm toolchain so its root package metadata matches `0.1.1`. Use `npm ci` for clean/reproducible installs. Use `npm install` only when intentionally changing dependency declarations and review the resulting lockfile diff together with `package.json`.
 
 ## Configuration
 
@@ -175,7 +175,7 @@ The bootstrap administrator is optional and intended only for explicitly configu
 From the repository root:
 
 ```bash
-node scripts/check-version.mjs 2.0.12
+node scripts/check-version.mjs 0.1.1
 ```
 
 This fails if `frontend/package.json`, `backend/pom.xml`, and an optional expected release version disagree.
@@ -292,7 +292,7 @@ Read [`docs/deployment.md`](docs/deployment.md) and [`docs/troubleshooting.md`](
 
 ## Releases
 
-LibraCore source manifests are currently prepared for **2.0.12**. A release tag must match the backend/frontend manifest version; release automation validates this before packaging. The release workflow requires the committed frontend lockfile, performs reproducible frontend verification, starts the packaged backend against PostgreSQL, requires a healthy actuator response, and packages the backend JAR without a hard-coded historical filename.
+LibraCore source manifests are currently prepared for **0.1.1**. A release tag must match the backend/frontend manifest version; release automation validates this before packaging. The release workflow requires the committed frontend lockfile, performs reproducible frontend verification, starts the packaged backend against PostgreSQL, requires a healthy actuator response, and packages the backend JAR without a hard-coded historical filename.
 
 Release procedure, migration checks, rollback expectations, artifact verification, and release-note requirements are in [`docs/release.md`](docs/release.md).
 
