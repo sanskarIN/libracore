@@ -2,31 +2,28 @@
 
 The roadmap describes direction, not a promise that an unchecked item already exists. `what_changed.md` is the implementation handoff and `CHANGELOG.md` records delivered behavior.
 
-## 1.1.1 — Release closure
+## 1.1.2 — Maintenance release closure
 
-- [x] Modular Spring Boot backend and PostgreSQL/Flyway persistence.
-- [x] Catalog, copies, branches, shelves, authors, publishers, categories, and search.
-- [x] Members, accounts, roles, authentication, authorization, and administrator staff-account management.
-- [x] Issue, return, renewal, reservations/waitlists, configurable fine policies, and settlements.
-- [x] Dashboard, overdue reporting, audit views, CSV exchange, notifications, and backup scripts.
-- [x] Responsive React/TypeScript client with dark/light/system themes and role-complete mobile navigation.
-- [x] Core backend/frontend tests and CI foundations.
-- [x] Security, privacy, architecture, setup, testing, operations, release, and exhaustive repository-reference documentation.
-- [x] Rebaseline backend/frontend executable manifests to `1.1.1`.
-- [x] Synchronize the generated frontend lockfile with the frontend manifest through the supported npm toolchain.
-- [x] Extend the release version guard to validate frontend lockfile root metadata.
-- [x] Keep release automation fail-closed on tag/manifest mismatch and missing lockfile.
-- [x] Keep packaged-backend PostgreSQL startup and `/actuator/health` verification in release automation.
-- [x] Keep the automated disposable PostgreSQL Recovery Drill and backup/restore verification.
-- [x] Store prepared `v1.1.1` release notes in the repository and publish them from the tagged source.
-- [ ] Observe successful Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill on the exact release source; fix every failure.
+- [x] Preserve the published `v1.0.0`, `v1.1.0`, and `v1.1.1` history.
+- [x] Advance the backend executable manifest to `1.1.2`.
+- [x] Advance the frontend executable manifest to `1.1.2`.
+- [x] Add repository-managed `v1.1.2` release notes.
+- [x] Correct release-facing documentation so `v1.1.1` is recorded as published and `v1.1.2` as the next maintenance target.
+- [ ] Synchronize and commit `frontend/package-lock.json` using the supported npm toolchain.
+- [ ] Observe successful Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill on the exact final source; fix every failure.
 - [ ] Complete role-based browser smoke testing and accessibility evidence.
+- [ ] Review repository links, configuration, tracked secrets, and release artifacts.
 - [ ] Enable and verify `main` branch protection/rules using stable required-check names, or document the host-level limitation if unavailable.
-- [ ] Tag and publish `v1.1.1` only after every release gate above is closed.
+- [ ] Run `node scripts/check-version.mjs 1.1.2` against the exact final checkout.
+- [ ] Tag and publish `v1.1.2` only after every release gate above is closed.
+
+## Historical 1.1.1 release line
+
+The repository's `v1.1.1` release is published and remains immutable. The next release target is `v1.1.2`; do not rewrite or force-move any existing stable tag.
 
 ## Historical 1.1.0 release line
 
-The repository's `v1.1.0` release preparation is retained as history. The next release target is `v1.1.1`; do not rewrite or force-move the existing `v1.0.0` or `v1.1.0` tags.
+The repository's `v1.1.0` release preparation and publication history are retained for auditability. Its tag is historical and must not be rewritten.
 
 ## Historical 2.0.12 engineering line
 
