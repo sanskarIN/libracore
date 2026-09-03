@@ -3,7 +3,6 @@
 **Audit/update date:** 2026-09-03  
 **Repository:** `sanskarIN/libracore`  
 **Branch:** `main`  
-**Current main:** `4eeb7c2e4d797a408414a84bb196ccdd8ed61945`  
 **Published stable release:** `v1.1.1`  
 **Active release target:** `v1.1.2`  
 **Commit identity used for project commits:** `Sanskar <sanskarin@outlook.in>`
@@ -14,7 +13,7 @@ This is the canonical continuation record for LibraCore. The published `v1.0.0`,
 
 `v1.1.1` is a published stable GitHub release. Its release tag targets commit `dc55695f78fff89ac56c2d2ff8549673619a9d6f`, and the tag-scoped release workflow was started against that exact source.
 
-The repository release record uses the repository-managed `docs/release-notes/v1.1.1.md` content. The existence of the GitHub release and the success of every release workflow job are separate facts; release artifacts and workflow conclusions must still be checked directly before being described as fully verified.
+The repository release record uses the repository-managed `docs/release-notes/v1.1.1.md` content. The existence of the GitHub release and the success of every release workflow job are separate facts; release artifacts and workflow conclusions must be checked directly before being described as fully verified.
 
 The previous handoff incorrectly described `v1.1.1` as unpublished after the release had already been created. This continuation corrects that documentation state rather than rewriting the published release.
 
@@ -31,6 +30,9 @@ The next maintenance line has been opened with focused, reviewable commits:
 - `155ecd040bf5f78a1a01b54e6fe1df508183518a` — `docs(roadmap): open 1.1.2 maintenance closure`
 - `05aa0301f2d7ecd4684b3b83e4284c6471412f92` — `docs(release): move publication procedure to 1.1.2`
 - `4eeb7c2e4d797a408414a84bb196ccdd8ed61945` — `docs(release): open v1.1.2 continuation handoff`
+- `1141f4167d19d918e94e66fd2b57834ad91e8bb2` — `docs(release): correct v1.1.2 commit ledger`
+
+The final handoff edit itself is intentionally omitted from this list to avoid making the ledger self-referential. Its commit is the current `main` tip.
 
 All project commits use the requested identity `Sanskar <sanskarin@outlook.in>`.
 
@@ -74,9 +76,8 @@ At the time of this handoff:
 
 - `v1.1.1` is published as a stable GitHub release.
 - `v1.1.2` source manifests and the committed frontend lockfile are synchronized.
-- `main` currently points to `4eeb7c2e4d797a408414a84bb196ccdd8ed61945`.
 - Current main-branch status is pending, so there is not yet sufficient evidence to call `v1.1.2` release-ready.
-- The tag-scoped `v1.1.1` release workflow was still being monitored during this continuation; do not infer artifact success solely from the existence of the release record.
+- The tag-scoped `v1.1.1` release workflow must be considered separately from the existence of the release record; do not infer artifact success solely from publication.
 
 ## Remaining v1.1.2 release gates
 
