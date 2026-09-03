@@ -75,6 +75,24 @@ jobs:
           fi
           echo "BACKEND_JAR=$backend_jar" >> "$GITHUB_ENV"
 
+      - name: Wait for PostgreSQL client connectivity
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in {1..30}; do
+            if docker run --rm --network host \
+              -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD \
+              postgres:18 \
+              pg_isready -d libracore_source >/dev/null 2>&1; then
+              echo "PostgreSQL is accepting connections."
+              exit 0
+            fi
+            echo "Waiting for PostgreSQL (attempt $attempt/30)..."
+            sleep 2
+          done
+          echo "PostgreSQL did not become reachable from the runner." >&2
+          exit 1
+
       - name: Migrate disposable source database
         shell: bash
         env:
@@ -82,10 +100,37 @@ jobs:
         run: |
           set -euo pipefail
           java -jar "$BACKEND_JAR" > /tmp/libracore-recovery-source.log 2>&1 &
-          echo $! > /tmp/libracore-recovery-source.pid
-          curl --fail --silent --show-error --retry 20 --retry-all-errors --retry-delay 2 http://localhost:8080/actuator/health
-          kill "$(cat /tmp/libracore-recovery-source.pid)" 2>/dev/null || true
-          rm -f /tmp/libracore-recovery-source.pid
+          source_pid=$!
+          echo "$source_pid" > /tmp/libracore-recovery-source.pid
+
+          cleanup_source() {
+            status=$?
+            if [[ "$status" -ne 0 ]]; then
+              echo '--- source database backend log after migration failure ---' >&2
+              cat /tmp/libracore-recovery-source.log 2>/dev/null || true
+            fi
+            kill "$source_pid" 2>/dev/null || true
+            rm -f /tmp/libracore-recovery-source.pid
+            exit "$status"
+          }
+          trap cleanup_source EXIT
+
+          for attempt in {1..30}; do
+            if ! kill -0 "$source_pid" 2>/dev/null; then
+              echo "Packaged backend exited before the health check." >&2
+              exit 1
+            fi
+            if curl --fail --silent --show-error http://localhost:8080/actuator/health; then
+              echo
+              echo "Source database migration and health check succeeded."
+              exit 0
+            fi
+            echo "Waiting for packaged backend health (attempt $attempt/30)..."
+            sleep 2
+          done
+
+          echo "Packaged backend did not become healthy within the recovery-drill startup window." >&2
+          exit 1
 
       - name: Seed fictional recovery marker
         shell: bash
