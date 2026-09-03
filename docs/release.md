@@ -1,6 +1,6 @@
 # Release Process
 
-LibraCore does not call a release ready merely because source files exist. A release requires reproducible verification evidence. The published stable baseline is **1.1.2**; the current maintenance target is **1.1.3**, and the npm-generated `frontend/package-lock.json` remains committed.
+LibraCore does not call a release ready merely because source files exist. A release requires reproducible verification evidence. The published stable baseline is **1.1.2**; the current maintenance target is **1.1.4**, and the npm-generated `frontend/package-lock.json` remains committed.
 
 ## Pre-release checklist
 
@@ -9,7 +9,7 @@ LibraCore does not call a release ready merely because source files exist. A rel
 3. Confirm no real secrets/private data are tracked.
 4. Verify release-version synchronization from the repository root:
    ```bash
-   node scripts/check-version.mjs 1.1.3
+   node scripts/check-version.mjs 1.1.4
    ```
 5. Verify backend:
    ```bash
@@ -23,13 +23,13 @@ LibraCore does not call a release ready merely because source files exist. A rel
    npm ci --ignore-scripts --no-audit --no-fund
    npm run check
    ```
-8. Start PostgreSQL from an empty disposable volume and start the **packaged backend JAR**, not only the application from source; confirm all Flyway migrations and `/actuator/health`.
+8. Start PostgreSQL from an empty disposable volume and start the **packaged backend JAR**, not only the application from source; confirm all Flyway migrations and `/actuator/health`. Allow the release workflow's extended startup retry window to accommodate first-run migration/bootstrap time.
 9. Perform the primary-role smoke journeys documented in `docs/testing.md`.
 10. Perform the manual accessibility checks in `docs/accessibility.md`.
 11. Run dependency/static-security automation and review failures.
 12. Perform or review a current backup/restore drill.
 13. Check documentation links/configuration against the actual tree.
-14. Confirm the intended tag exactly matches frontend, backend, and lockfile versions. For this release the tag is `v1.1.3`.
+14. Confirm the intended tag exactly matches frontend, backend, and lockfile versions. For this release the tag is `v1.1.4`.
 15. Do not cut a stable release while required verification remains unobserved or a release-blocking limitation remains open in `what_changed.md`.
 
 ## Versioning
@@ -41,8 +41,8 @@ LibraCore uses Semantic Versioning for release identifiers. The backend Maven pr
 After the release commit passes every gate:
 
 ```bash
-git tag -a v1.1.3 -m "LibraCore v1.1.3"
-git push origin v1.1.3
+git tag -a v1.1.4 -m "LibraCore v1.1.4"
+git push origin v1.1.4
 ```
 
 The release workflow verifies that the pushed tag and all three version-bearing frontend/backend manifests represent the same version. Do not move a published release tag. Correct mistakes with a new version.
@@ -54,13 +54,13 @@ The release workflow verifies that the pushed tag and all three version-bearing 
 - validates the release tag against frontend, backend, and lockfile versions before expensive build work;
 - runs backend Maven verification against PostgreSQL;
 - starts the packaged backend JAR produced by the build;
-- verifies the packaged service reaches `/actuator/health` successfully against PostgreSQL before publication;
+- verifies the packaged service reaches `/actuator/health` successfully against PostgreSQL with a bounded extended retry window;
 - installs frontend dependencies through reproducible `npm ci` with lifecycle scripts disabled;
 - runs the aggregate frontend quality gate;
 - discovers the packaged backend JAR without a hard-coded historical version filename;
 - packages the frontend production build;
 - generates SHA-256 checksums;
-- publishes the repository-managed `docs/release-notes/v1.1.3.md` as the release description;
+- selects the repository-managed release notes from the pushed tag, preventing stale hard-coded release-note paths;
 - always attempts to stop the temporary packaged backend process and prints its log when the release job fails.
 
 The release checkout does not persist Git credentials after checkout. Read-only verification workflows follow the same least-privilege pattern; only the explicit lockfile synchronization workflow retains credentials because it may need to push a generated lockfile to `main`.
