@@ -2,7 +2,7 @@
 
 The roadmap describes direction, not a promise that an unchecked item already exists. `what_changed.md` is the implementation handoff and `CHANGELOG.md` records delivered behavior.
 
-## 2.0.12 — Release-candidate closure
+## 0.1.1 — Release-candidate closure
 
 - [x] Modular Spring Boot backend and PostgreSQL/Flyway persistence.
 - [x] Catalog, copies, branches, shelves, authors, publishers, categories, and search.
@@ -12,25 +12,20 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 - [x] Responsive React/TypeScript client with dark/light/system themes and role-complete mobile navigation.
 - [x] Core backend/frontend tests and CI foundations.
 - [x] Security, privacy, architecture, setup, testing, operations, release, and exhaustive repository-reference documentation.
-- [x] Align backend/frontend executable manifests to `2.0.12`.
-- [x] Display the frontend package version from build metadata instead of a hard-coded Settings value.
-- [x] Add a cross-manifest version guard and GitHub Actions version-sync check.
-- [x] Remove historical hard-coded backend JAR filenames from backend CI and release packaging.
-- [x] Make release automation reject a tag that disagrees with executable manifest versions.
-- [x] Make release automation require a committed frontend lockfile and reproducible `npm ci`.
-- [x] Make release automation start the exact packaged backend JAR against PostgreSQL and require a healthy `/actuator/health` response before publication.
-- [x] Separate lockfile generation into an explicit maintainer bootstrap workflow; keep normal frontend CI read-only.
-- [x] Fix first-time lockfile detection so an untracked generated `frontend/package-lock.json` is recognized correctly.
-- [x] Preserve generated lockfile artifacts even when later frontend verification fails.
-- [x] Cancel superseded Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and lockfile-bootstrap runs.
-- [x] Move core GitHub Actions to the current supported Node 24 runtime lines used by this repository.
-- [x] Exercise hosted lockfile generation, isolate and fix the strict frontend TypeScript defect, then pass lint, strict typecheck, tests, and production build.
-- [x] Generate, review, and commit the synchronized npm-generated `frontend/package-lock.json` (`89d1c833`).
-- [x] Add an automated disposable PostgreSQL Recovery Drill covering packaged migrations/startup, logical backup, checksum verification, restore, restored-data/schema checks, and packaged health on the restored database.
-- [ ] Observe successful Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill on the current 2.0.12 verification source; fix every failure.
+- [x] Rebaseline backend/frontend executable manifests to `0.1.1`.
+- [x] Keep build-derived frontend version display and the cross-manifest version guard.
+- [x] Keep release automation fail-closed on tag/manifest mismatch and missing lockfile.
+- [x] Keep packaged-backend PostgreSQL startup and `/actuator/health` verification in release automation.
+- [x] Keep the automated disposable PostgreSQL Recovery Drill and backup/restore verification.
+- [ ] Regenerate and commit `frontend/package-lock.json` with `0.1.1` root metadata using the supported Node/npm toolchain.
+- [ ] Observe successful Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill on the exact release source; fix every failure.
 - [ ] Complete role-based browser smoke testing and accessibility evidence.
-- [ ] Enable and verify `main` branch protection/rules using the stable required-check names.
-- [ ] Tag `v2.0.12` only after every release gate above is closed.
+- [ ] Enable and verify `main` branch protection/rules using stable required-check names, or document the host-level limitation if unavailable.
+- [ ] Tag and publish `v0.1.1` only after every release gate above is closed.
+
+## Historical 2.0.12 engineering line
+
+The repository previously used `2.0.12` as a release-candidate engineering line. Its implementation work is retained in Git history and changelog documentation, but it is no longer the active release target. Do not create or publish `v2.0.12` as part of the current release pass.
 
 ## 2.1.x — Operational hardening
 
