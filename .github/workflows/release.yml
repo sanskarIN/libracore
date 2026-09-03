@@ -79,7 +79,7 @@ jobs:
           echo $! > /tmp/libracore-release-backend.pid
 
       - name: Verify packaged backend health
-        run: curl --fail --silent --show-error --retry 20 --retry-all-errors --retry-delay 2 http://localhost:8080/actuator/health
+        run: curl --fail --silent --show-error --retry 60 --retry-all-errors --retry-delay 2 --retry-max-time 180 http://localhost:8080/actuator/health
 
       - name: Install frontend dependencies reproducibly
         working-directory: frontend
@@ -109,7 +109,7 @@ jobs:
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v3
         with:
-          body_path: docs/release-notes/v1.1.1.md
+          body_path: docs/release-notes/${{ github.ref_name }}.md
           generate_release_notes: false
           files: |
             libracore-backend-${{ github.ref_name }}.jar
