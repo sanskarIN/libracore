@@ -13,15 +13,18 @@ This is the canonical continuation record for LibraCore. Published `v1.0.0`, `v1
 
 Focused, reviewable commits have opened the next maintenance line:
 
-- `c11dd5aa8c48572ae52020b8c6aef5991721ad00` — `ci(release): harden packaged health gate and release notes path`
-- `8fe86538b94c0d41a654768f9d1a870f2dfe0362` — `chore(release): advance backend to 1.1.4`
-- `ca3440cf738a7a4b2236038ac25012ca3dde1c5d` — `chore(release): advance frontend to 1.1.4`
-- `869ce14b7b50e471c7154212011b5bc3f552caf3` — `docs(release): add v1.1.4 release notes`
-- `6ca90e48905bc9e204c75be60e0e49a51f7c08fb` — `docs(package): add frontend repository metadata`
-- `74c012ab5b3d55a1253166e9b4dd6b6a082d6d05` — `ci(lockfile): automate frontend lockfile synchronization`
-- `98e2b78d0022b1966b5461a885b1dedd5887c61d` — `docs(changelog): open v1.1.4 maintenance line`
-- `fdec8bfb8cddc5367f4a90ab245278e6e9b735b3` — `docs(roadmap): move maintenance closure to 1.1.4`
-- `f86927bdfc3de1f08c99c11a8f466632eb75476d` — `docs(release): target v1.1.4 publication procedure`
+- `ci(release): harden packaged health gate and release notes path`
+- `chore(release): advance backend to 1.1.4`
+- `chore(release): advance frontend to 1.1.4`
+- `docs(release): add v1.1.4 release notes`
+- `docs(package): add frontend repository metadata`
+- `ci(lockfile): automate frontend lockfile synchronization`
+- `docs(changelog): open v1.1.4 maintenance line`
+- `docs(roadmap): move maintenance closure to 1.1.4`
+- `docs(release): target v1.1.4 publication procedure`
+- `docs(release): record v1.1.4 engineering handoff`
+- `docs(release): correct v1.1.4 handoff record`
+- `docs(release): remove unverified commit identifiers`
 
 All commits use `Sanskar <sanskarin@outlook.in>`.
 
