@@ -1,76 +1,85 @@
-# LibraCore — 1.1.3 Engineering Handoff
+# LibraCore — 1.1.4 Engineering Handoff
 
 **Audit/update date:** 2026-09-03  
 **Repository:** `sanskarIN/libracore`  
 **Branch:** `main`  
 **Published stable release:** `v1.1.2`  
-**Active release target:** `v1.1.3`  
+**Active release target:** `v1.1.4`  
 **Commit identity:** `Sanskar <sanskarin@outlook.in>`
 
-This is the canonical continuation record for LibraCore. Published `v1.0.0`, `v1.1.0`, `v1.1.1`, and `v1.1.2` history must not be rewritten or force-moved.
+This is the canonical continuation record for LibraCore. Published `v1.0.0`, `v1.1.0`, `v1.1.1`, and `v1.1.2` history must not be rewritten or force-moved. The attempted `v1.1.3` tag and its failed workflow are retained as audit history.
 
-## v1.1.2 publication record
-
-`v1.1.2` is a published stable GitHub release. The release record is present on GitHub and its published release body is based on the repository-managed `docs/release-notes/v1.1.2.md`. Release existence and successful completion of every release workflow job are separate facts and must be verified independently.
-
-## v1.1.3 work completed in this pass
+## v1.1.4 work completed in this pass
 
 Focused, reviewable commits have opened the next maintenance line:
 
-- `5a3efbd2ea390a91203cad9b1fd5d32ad77e3345` — `chore(release): advance backend to 1.1.3`
-- `05069a0932143960dcdeebcfe37603be815044ac` — `chore(release): advance frontend to 1.1.3`
-- `4ec1653346f352771550e031f738134d7f181402` — `docs(release): add v1.1.3 release notes`
-- `3a995409a901a160531b3e3aa7c5ccafe3474103` — `docs(changelog): open 1.1.3 maintenance line`
-- `5717a688db8dcda103859e1e8559c0cf4c237d24` — `docs(roadmap): open 1.1.3 maintenance closure`
-- `405edabf1f095a5c2ee5d4683b2a40cdb5eda623` — `docs(release): move publication procedure to 1.1.3`
-- this handoff commit records the current release state and exact next gates.
+- `c11dd5aa8c48572ae52020b8c6aef5991721ad00` — `ci(release): harden packaged health gate and release notes path`
+- `8fe86538b94c0d41a654768f9d1a870f2dfe0362` — `chore(release): advance backend to 1.1.4`
+- `ca3440cf738a7a4b2236038ac25012ca3dde1c5d` — `chore(release): advance frontend to 1.1.4`
+- `869ce14b7b50e471c7154212011b5bc3f552caf3` — `docs(release): add v1.1.4 release notes`
+- `6ca90e48905bc9e204c75be60e0e49a51f7c08fb` — `docs(package): add frontend repository metadata`
+- `74c012ab5b3d55a1253166e9b4dd6b6a082d6d05` — `ci(lockfile): automate frontend lockfile synchronization`
+- `98e2b78d0022b1966b5461a885b1dedd5887c61d` — `docs(changelog): open v1.1.4 maintenance line`
+- `fdec8bfb8cddc5367f4a90ab245278e6e9b735b3` — `docs(roadmap): move maintenance closure to 1.1.4`
+- `f86927bdfc3de1f08c99c11a8f466632eb75476d` — `docs(release): target v1.1.4 publication procedure`
 
 All commits use `Sanskar <sanskarin@outlook.in>`.
 
+## v1.1.3 diagnostic record
+
+The existing `v1.1.3` tag triggered release workflow run `33748921280` from source commit `275782d1d735aa8fedd8bb98c06dc019fbb95e4d`. The job successfully checked out the tag, validated the release version, packaged the backend, and started the packaged service, but failed at `Verify packaged backend health`; later release steps were skipped. The failure is retained as diagnostic evidence rather than rewritten. citehttps://api.github.com/repos/sanskarIN/libracore/actions/runs/33748921280/jobs?per_page=100
+
 ## Manifest and lockfile state
 
-The executable manifests are aligned to `1.1.3`:
+The executable manifests are aligned to `1.1.4`:
 
-- `backend/pom.xml` → `1.1.3`;
-- `frontend/package.json` → `1.1.3`;
-- `frontend/package-lock.json` → must be regenerated/synchronized to `1.1.3` by the supported npm workflow before tagging.
+- `backend/pom.xml` → `1.1.4`;
+- `frontend/package.json` → `1.1.4`;
+- `frontend/package-lock.json` → must be regenerated/synchronized to `1.1.4` by the supported npm workflow before tagging.
 
-The lockfile must not be hand-synthesized. The repository's lockfile synchronization workflow should generate and commit the exact dependency metadata for the `1.1.3` frontend manifest.
+The lockfile must not be hand-synthesized. The updated lockfile bootstrap workflow now runs on relevant `main` pushes and generates the lockfile with Node.js 24/npm, verifies the locked installation and frontend checks, then commits the generated lockfile using the configured maintainer identity when it changes.
 
-`scripts/check-version.mjs` is the executable guard for all three version-bearing manifests.
+`scripts/check-version.mjs` remains the executable guard for all three version-bearing manifests.
 
 ## Current release sequence
 
 ```text
-v1.0.0 → v1.1.0 → v1.1.1 → v1.1.2 → v1.1.3 → v1.2.0 → ...
+v1.0.0 → v1.1.0 → v1.1.1 → v1.1.2 → v1.1.3 → v1.1.4 → ...
 ```
 
 The old `2.0.12` and temporary `0.1.1` preparation lines remain historical engineering work and are not active release targets.
 
-## Release workflow
+## Release workflow changes
 
-`.github/workflows/release.yml` is tag-scoped and fail-closed. It checks the committed lockfile, validates the tag against backend/frontend/lockfile versions, verifies the packaged backend with PostgreSQL and `/actuator/health`, installs frontend dependencies with `npm ci`, runs frontend quality checks, builds release artifacts, creates SHA-256 checksums, and publishes the prepared release notes for the tagged version.
+`.github/workflows/release.yml` remains tag-scoped and fail-closed. For v1.1.4 it now:
 
-## Recovery and reliability
-
-The automated disposable PostgreSQL Recovery Drill remains part of the release gate. It exercises the actual backup/restore scripts, verifies migration history and marker data, then starts the packaged backend against the restored database.
+- keeps the committed lockfile requirement;
+- validates the tag against backend/frontend/lockfile versions;
+- verifies the backend with PostgreSQL;
+- gives the packaged backend a bounded extended health-startup retry window;
+- installs frontend dependencies with `npm ci`;
+- runs frontend quality checks;
+- packages release artifacts;
+- creates SHA-256 checksums;
+- selects `docs/release-notes/${GITHUB_REF_NAME}.md`, preventing stale hard-coded release-note paths;
+- stops the temporary backend and prints its log when the job fails.
 
 ## Current verification status
 
-The `1.1.3` version/documentation commits have triggered fresh CI. They must be allowed to conclude before tagging.
+The v1.1.4 source line is **not release-ready yet**. The lockfile synchronization workflow must first produce and commit the `1.1.4` lockfile, then all release-blocking CI and manual evidence must settle on the exact final source.
 
 At this handoff:
 
-- `v1.1.2` is published.
-- `1.1.3` backend and frontend manifests are updated.
-- `frontend/package-lock.json` still needs supported-toolchain synchronization to `1.1.3` if the current synchronization workflow has not yet completed.
-- Current main-branch release readiness is **not yet established**.
-- No `v1.1.3` tag should be created until the exact final source has successful release-blocking evidence.
+- `v1.1.2` is the latest published stable release.
+- `v1.1.3` has an existing failed release workflow and is retained as history.
+- backend and frontend manifests are updated to `1.1.4`.
+- the frontend lockfile is awaiting supported-toolchain synchronization to `1.1.4`.
+- no `v1.1.4` tag should be created until the exact final source has successful release-blocking evidence.
 
-## Remaining v1.1.3 release gates
+## Remaining v1.1.4 release gates
 
-1. confirm the `1.1.3` frontend lockfile synchronization commit is present;
-2. run `node scripts/check-version.mjs 1.1.3` against the final checkout;
+1. confirm the `1.1.4` frontend lockfile synchronization commit is present;
+2. run `node scripts/check-version.mjs 1.1.4` against the final checkout;
 3. pass current Backend CI;
 4. pass current Frontend CI;
 5. pass Version Sync;
@@ -82,16 +91,17 @@ At this handoff:
 11. review repository links/configuration and tracked secrets;
 12. confirm branch-protection/rules status and document any host-level limitation;
 13. identify the exact final verified commit;
-14. create `v1.1.3` only from that exact commit;
+14. create `v1.1.4` only from that exact commit;
 15. confirm the tag-scoped release workflow succeeds;
-16. review generated release artifacts and SHA-256 checksums.
+16. review generated release artifacts and SHA-256 checksums;
+17. confirm the GitHub release is published as stable/latest without rewriting previous releases.
 
 ## Local verification commands
 
 From the repository root:
 
 ```bash
-node scripts/check-version.mjs 1.1.3
+node scripts/check-version.mjs 1.1.4
 ```
 
 Backend:
@@ -111,19 +121,19 @@ npm run check
 
 ## Tagging rule
 
-Do not create `v1.1.3` until the exact final source has passed all release-blocking gates.
+Do not create `v1.1.4` until the exact final source has passed all release-blocking gates.
 
 ```bash
 git checkout main
 git pull --ff-only
-node scripts/check-version.mjs 1.1.3
-git tag -a v1.1.3 -m "LibraCore v1.1.3"
-git push origin v1.1.3
+node scripts/check-version.mjs 1.1.4
+git tag -a v1.1.4 -m "LibraCore v1.1.4"
+git push origin v1.1.4
 ```
 
 Never force-move `v1.0.0`, `v1.1.0`, `v1.1.1`, or `v1.1.2`.
 
-## Next engineering priorities after v1.1.3
+## Next engineering priorities after v1.1.4
 
 After release closure, continue with meaningful product/operational work rather than version-only commits:
 
@@ -133,3 +143,9 @@ After release closure, continue with meaningful product/operational work rather 
 - deployment/environment validation;
 - accessibility and internationalization improvements;
 - further interoperability and library integrations.
+
+## Project links
+
+- GitHub: https://github.com/sanskarIN/libracore
+- Maintainer: https://github.com/sanskarIN
+- BuyMeACoffee: https://buymeacoffee.com/sanskarIN
