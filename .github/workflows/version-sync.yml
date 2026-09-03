@@ -6,12 +6,14 @@ on:
     paths:
       - 'backend/pom.xml'
       - 'frontend/package.json'
+      - 'frontend/package-lock.json'
       - 'scripts/check-version.mjs'
       - '.github/workflows/version-sync.yml'
   pull_request:
     paths:
       - 'backend/pom.xml'
       - 'frontend/package.json'
+      - 'frontend/package-lock.json'
       - 'scripts/check-version.mjs'
       - '.github/workflows/version-sync.yml'
   workflow_dispatch:
