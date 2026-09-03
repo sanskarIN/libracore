@@ -109,7 +109,8 @@ jobs:
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v3
         with:
-          generate_release_notes: true
+          body_path: docs/release-notes/v1.1.1.md
+          generate_release_notes: false
           files: |
             libracore-backend-${{ github.ref_name }}.jar
             libracore-web-${{ github.ref_name }}.tar.gz
