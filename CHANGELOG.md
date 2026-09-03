@@ -4,48 +4,44 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 ## [Unreleased]
 
-### Release hardening
+### Next
 
-- Rebased the executable frontend/backend release manifests onto the `1.1.0` release line.
-- Retained the committed npm-generated frontend lockfile as the canonical dependency graph; verify/regenerate it with the supported npm toolchain when dependency metadata changes.
-- Keep release publication fail-closed on version mismatch, missing lockfile, backend verification, packaged-service health, frontend quality, security, and recovery evidence.
-- Continue using the automated PostgreSQL Recovery Drill to validate the real backup/restore path and packaged backend startup against restored data.
+- Future work belongs on the next planned release line after `1.1.1`.
+- Do not treat unreleased source changes as part of a published release until the corresponding tag and release workflow succeed.
 
-### Release gates
-
-- Complete current Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill evidence on the intended release source.
-- Complete role-based browser smoke and manual accessibility evidence.
-- Enable `main` branch protection/code-owner enforcement after stable required-check names are confirmed.
-- Create and publish `v1.1.0` only after every release-blocking gate is closed.
-
-## [1.1.0] - 2026-09-03 — release candidate
+## [1.1.1] - 2026-09-03 — release candidate
 
 ### Changed
 
-- Established `1.1.0` as the intended release line following the existing `v1.0.0` tag.
-- Rebased the backend Maven version to `1.1.0`.
-- Rebased the frontend npm package version to `1.1.0`.
-- Updated the README, roadmap, and release process to use `v1.1.0`.
-- Preserved the previous `0.1.1` preparation as historical repository work rather than a release target.
+- Advanced the backend Maven project version to `1.1.1`.
+- Advanced the frontend npm package version to `1.1.1`.
+- Synchronized the generated frontend lockfile with the release version through automated npm lockfile generation.
+- Extended the executable release-version guard to validate the frontend lockfile root metadata.
+- Added repository-managed `v1.1.1` release notes and configured release automation to publish those prepared notes instead of generating an unrelated automatic description.
+- Preserved all earlier release tags and historical engineering work without rewriting published history.
 
 ### Verification
 
-- The release version guard remains responsible for validating frontend/backend manifest agreement and optional tag agreement.
-- The final `v1.1.0` source must still pass the complete tag-triggered release workflow before publication.
-- Current CI and Recovery Drill results must be evaluated from the exact final release source rather than inferred from historical runs.
+- The release workflow validates the tag against frontend, backend, and lockfile versions before build work.
+- The tagged release workflow must pass backend verification, packaged PostgreSQL startup and health checks, reproducible frontend installation, frontend quality checks, artifact packaging, and checksum generation before publication.
+- Security, dependency, recovery, browser smoke, and accessibility evidence remain release-blocking where required by the repository's release checklist.
 
 ### Release status
 
-- `v1.1.0` is a release candidate until the complete release gates pass.
-- No claim of a published stable `v1.1.0` release should be made until the GitHub release workflow succeeds.
+- `v1.1.1` is the active release target.
+- It must not be described as published until a successful tag-triggered release workflow creates the GitHub release.
+
+## Historical 1.1.0 release line
+
+The repository previously prepared the `1.1.0` release line. Its source and CI history remain available for auditability. The current continuation target is `1.1.1`.
 
 ## Historical 2.0.12 engineering line
 
-The repository previously used `2.0.12` as a release-candidate engineering line. Its implementation work is retained in Git history and documentation, but it is no longer the active release target.
+The repository previously used `2.0.12` as a release-candidate engineering line. Its implementation work is retained in Git history and documentation, but it is no longer an active release target.
 
 ## Historical 0.1.1 preparation
 
-A temporary `0.1.1` release-rebaseline pass was superseded after confirming that the intended post-`v1.0.0` release sequence is `v1.1.0`. Those preparation commits remain in Git history for auditability and are not a published release.
+A temporary `0.1.1` release-rebaseline pass was superseded after confirming the intended post-`v1.0.0` release sequence. Those preparation commits remain in Git history for auditability and were never intended to become a published release.
 
 ### Product capabilities already present in the engineering line
 
@@ -58,9 +54,3 @@ A temporary `0.1.1` release-rebaseline pass was superseded after confirming that
 - Reporting dashboard, overdue views, audit views, and CSV import/export workflows.
 - Mock-safe and SMTP notification adapters.
 - PostgreSQL schema managed through Flyway migrations.
-- Opaque bearer-session authentication and server-side role authorization.
-- Backup and restore scripts.
-- Light/dark/system appearance support and responsive accessibility-oriented design system.
-- Frontend utility/unit tests and backend domain/parser tests.
-- Backend/frontend GitHub Actions quality gates, CodeQL, pull-request dependency review, Dependabot, tagged release automation, and version synchronization automation.
-- Security, privacy, threat-model, support, contribution, operations, architecture, testing, release, branch-protection, and exhaustive repository-reference documentation.
