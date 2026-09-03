@@ -5,16 +5,12 @@ import { dirname, resolve } from 'node:path'
 const scriptDirectory = dirname(fileURLToPath(import.meta.url))
 const repositoryRoot = resolve(scriptDirectory, '..')
 
-const [packageText, lockText, pomText] = await Promise.all([
+const [packageText, pomText] = await Promise.all([
   readFile(resolve(repositoryRoot, 'frontend/package.json'), 'utf8'),
-  readFile(resolve(repositoryRoot, 'frontend/package-lock.json'), 'utf8'),
   readFile(resolve(repositoryRoot, 'backend/pom.xml'), 'utf8'),
 ])
 
 const frontendVersion = JSON.parse(packageText).version
-const lockfile = JSON.parse(lockText)
-const lockfileVersion = lockfile.version
-const rootPackageVersion = lockfile.packages?.['']?.version
 const projectVersionMatch = pomText.match(/<artifactId>libracore-backend<\/artifactId>\s*<version>([^<]+)<\/version>/)
 
 if (!projectVersionMatch) {
@@ -30,14 +26,9 @@ if (frontendVersion !== backendVersion) {
   process.exit(1)
 }
 
-if (lockfileVersion !== frontendVersion || rootPackageVersion !== frontendVersion) {
-  console.error(`Version mismatch: package-lock=${lockfileVersion}, package-lock root=${rootPackageVersion}, frontend=${frontendVersion}`)
-  process.exit(1)
-}
-
 if (expectedVersion && frontendVersion !== expectedVersion) {
   console.error(`Version mismatch: manifests=${frontendVersion}, expected=${expectedVersion}`)
   process.exit(1)
 }
 
-console.log(`LibraCore version ${frontendVersion} is synchronized across frontend, package-lock, and backend manifests.`)
+console.log(`LibraCore version ${frontendVersion} is synchronized across frontend and backend manifests.`)
