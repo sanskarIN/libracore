@@ -1,6 +1,6 @@
 # Release Process
 
-LibraCore does not call a release ready merely because source files exist. A release requires reproducible verification evidence. The current source manifests are prepared for **0.1.1**, and the npm-generated `frontend/package-lock.json` remains committed.
+LibraCore does not call a release ready merely because source files exist. A release requires reproducible verification evidence. The current source manifests are prepared for **1.1.0**, and the npm-generated `frontend/package-lock.json` remains committed.
 
 ## Pre-release checklist
 
@@ -9,7 +9,7 @@ LibraCore does not call a release ready merely because source files exist. A rel
 3. Confirm no real secrets/private data are tracked.
 4. Verify release-version synchronization from the repository root:
    ```bash
-   node scripts/check-version.mjs 0.1.1
+   node scripts/check-version.mjs 1.1.0
    ```
 5. Verify backend:
    ```bash
@@ -29,7 +29,7 @@ LibraCore does not call a release ready merely because source files exist. A rel
 11. Run dependency/static-security automation and review failures.
 12. Perform or review a current backup/restore drill.
 13. Check documentation links/configuration against the actual tree.
-14. Confirm the intended tag exactly matches both executable manifests. For this release the tag is `v0.1.1`.
+14. Confirm the intended tag exactly matches both executable manifests. For this release the tag is `v1.1.0`.
 15. Do not cut a stable release while required verification remains unobserved or a release-blocking limitation remains open in `what_changed.md`.
 
 ## Versioning
@@ -41,8 +41,8 @@ LibraCore uses Semantic Versioning for release identifiers. The backend Maven pr
 After the release commit passes every gate:
 
 ```bash
-git tag -a v0.1.1 -m "LibraCore v0.1.1"
-git push origin v0.1.1
+git tag -a v1.1.0 -m "LibraCore v1.1.0"
+git push origin v1.1.0
 ```
 
 The release workflow verifies that the pushed tag, `backend/pom.xml`, and `frontend/package.json` all represent the same version. Do not move a published release tag. Correct mistakes with a new version.
@@ -78,7 +78,3 @@ The lockfile bootstrap's `frontend-package-lock-generated` artifact is a short-l
 ## Migration and rollback
 
 Before deployment, inspect migrations introduced since the currently deployed version and assess lock/downtime/data implications. Application rollback is not equivalent to database rollback: a newer schema may not be compatible with an older binary. Prefer forward-fix migrations and tested backup recovery over destructive ad-hoc SQL.
-
-## Release notes
-
-Include user-visible features/fixes, security-relevant changes, migration/configuration changes, known limitations, upgrade steps, and verification summary. Never claim a check passed if it was not actually run.
