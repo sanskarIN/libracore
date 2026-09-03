@@ -1,54 +1,62 @@
-# LibraCore — 0.1.1 Engineering Handoff
+# LibraCore — 1.1.0 Engineering Handoff
 
 **Audit/update date:** 2026-09-03  
 **Repository:** `sanskarIN/libracore`  
 **Branch:** `main`  
-**Active release line:** `0.1.1`  
+**Active release line:** `1.1.0`  
 **Commit identity used for project commits:** `Sanskar <sanskarin@outlook.in>`
 
-This is the canonical continuation record for LibraCore. The project is being prepared for `v0.1.1`. Release work must remain evidence-driven: source changes, CI results, recovery evidence, and release publication status are separate facts.
+This is the canonical continuation record for LibraCore. The intended next release follows the existing `v1.0.0` tag and is **`v1.1.0`**. Release work remains evidence-driven: source changes, CI results, recovery evidence, and release publication status are separate facts.
 
 ## Current release state
 
-The active release target is **`v0.1.1`**.
+The active release target is **`v1.1.0`**.
 
-Completed in this release-rebaseline pass:
+Completed in this correction/rebaseline pass:
 
-- backend Maven version changed from `2.0.12` to `0.1.1`;
-- frontend npm version changed from `2.0.12` to `0.1.1`;
-- release documentation changed to use `v0.1.1`;
-- changelog now contains a dedicated `0.1.1` release-candidate section;
-- this handoff document has been rebaselined from the former `2.0.12` release-candidate line.
+- backend Maven version is `1.1.0`;
+- frontend npm version is `1.1.0`;
+- README release references are `1.1.0`;
+- roadmap release references are `1.1.0`;
+- release procedure targets `v1.1.0`;
+- changelog now has a dedicated `1.1.0` release-candidate section;
+- the previous temporary `0.1.1` preparation is explicitly recorded as superseded historical work;
+- `what_changed.md` is now the canonical `1.1.0` handoff.
 
-The existing `v1.0.0` tag is intentionally not being rewritten. Its earlier release attempt was rejected because source manifests still declared `2.0.12`. The next release target is therefore a new `v0.1.1` tag created only after the release source has passed its gates.
+The existing `v1.0.0` tag is intentionally not being rewritten. The release sequence is now treated as `v1.0.0` followed by `v1.1.0`.
 
-## Release commits from this pass
+## Release commits from the correction pass
 
-The rebaseline was intentionally split into reviewable commits:
+The version/documentation correction was intentionally split into reviewable commits:
 
-- `7defea93` — `chore(release): rebaseline backend version to 0.1.1`
-- `013a93f5` — `chore(release): rebaseline frontend version to 0.1.1`
-- `3becf61e` — `docs(release): switch release process to 0.1.1`
-- `40af5b6d` — `docs(changelog): establish 0.1.1 release notes baseline`
-- this handoff update records the release-line transition and remaining gates.
+- `41bec20c` — `docs(release): rebaseline README for 1.1.0`
+- `fb7731ef` — `docs(release): rebaseline roadmap for 1.1.0`
+- `0f15c290` — `docs(release): target 1.1.0 release process`
+- `207ec72c` — `docs(changelog): rebaseline release notes for 1.1.0`
+- this handoff update records the final release-line decision and remaining gates.
 
 All project commits use the requested commit identity `Sanskar <sanskarin@outlook.in>`.
 
-## Lockfile closure required
+## Manifest state
 
-`frontend/package-lock.json` is already committed and remains the canonical generated dependency graph. The package declaration version is now `0.1.1`, while the existing lockfile was generated for the former `2.0.12` manifest metadata.
+The executable manifests are aligned to `1.1.0`:
 
-Before the final `v0.1.1` tag, the lockfile must be regenerated with the repository's supported Node/npm toolchain and reviewed as a generated file. Do **not** hand-edit or synthesize the lockfile. The final release source should contain a lockfile whose root package metadata agrees with `0.1.1`.
+- `backend/pom.xml` → `1.1.0`;
+- `frontend/package.json` → `1.1.0`.
+
+`scripts/check-version.mjs` remains the executable guard for frontend/backend/tag consistency.
+
+## Frontend lockfile
+
+`frontend/package-lock.json` is committed and its root metadata currently follows the frontend package version. It must be verified with the supported Node/npm toolchain before the final release tag. Do not introduce dependency changes merely to perform this release rebaseline, and do not synthesize a lockfile by hand.
+
+The release source must pass a clean `npm ci` installation and the frontend quality gate.
 
 ## Release workflow evidence
 
-The release workflow is fail-closed on manifest/tag mismatch. A previous `v1.0.0` attempt reached version validation and stopped with:
+The release workflow is fail-closed on manifest/tag mismatch. The earlier `v1.0.0` attempt demonstrated this by stopping at version validation when source manifests still declared `2.0.12`.
 
-```text
-Version mismatch: manifests=2.0.12, expected=1.0.0
-```
-
-That proves the version guard is active. It is not evidence that `v0.1.1` has passed release verification.
+That historical failure proves the guard works; it is not evidence for `v1.1.0` readiness.
 
 The release workflow also guards:
 
@@ -66,11 +74,11 @@ The release workflow also guards:
 
 ## Recovery Drill
 
-An automated disposable PostgreSQL Recovery Drill exists at `.github/workflows/recovery-drill.yml`. It exercises the repository's actual backup and restore scripts, verifies migration history and fictional marker data, then starts the packaged backend against the restored database.
+An automated disposable PostgreSQL Recovery Drill exists at `.github/workflows/recovery-drill.yml`. It exercises the repository's actual backup and restore scripts, verifies migration history and marker data, then starts the packaged backend against the restored database.
 
-A later CI hardening change added stronger PostgreSQL readiness and backend startup diagnostics after an earlier drill stopped during source-database migration. That hardening must be included in the release source before final release verification.
+A later CI hardening change added stronger PostgreSQL readiness and backend startup diagnostics after an earlier drill stopped during source-database migration. That hardening must be included in the exact release source.
 
-Do not claim Recovery Drill success until a current run on the exact intended release source has a successful conclusion.
+Do not claim Recovery Drill success until a current run on the exact intended `v1.1.0` source has a successful conclusion.
 
 ## Frontend verification history
 
@@ -78,7 +86,7 @@ The hosted frontend lockfile/bootstrap work previously demonstrated real lockfil
 
 The earlier `exactOptionalPropertyTypes` issue in `frontend/src/api.ts` was fixed without weakening compiler strictness, with regression coverage for optional API correlation identifiers.
 
-Those historical results remain useful engineering evidence but must not be represented as a fresh `v0.1.1` release-gate pass unless the corresponding current-source workflows succeed.
+Those historical results remain useful engineering evidence but must not be represented as a fresh `v1.1.0` release-gate pass unless the corresponding current-source workflows succeed.
 
 ## Product implementation already present
 
@@ -103,10 +111,10 @@ LibraCore contains the intended end-to-end library-management implementation acr
 
 ## Remaining release gates
 
-Before tagging `v0.1.1`, complete and directly verify:
+Before tagging `v1.1.0`, complete and directly verify:
 
-1. regenerate and commit the `0.1.1`-consistent frontend lockfile;
-2. run `node scripts/check-version.mjs 0.1.1`;
+1. verify/regenerate the committed frontend lockfile with the supported Node/npm toolchain;
+2. run `node scripts/check-version.mjs 1.1.0`;
 3. pass current Backend CI;
 4. pass current Frontend CI;
 5. pass Version Sync;
@@ -118,35 +126,35 @@ Before tagging `v0.1.1`, complete and directly verify:
 11. review repository links/configuration and release artifacts;
 12. confirm no secrets or private data are tracked;
 13. confirm `main` branch-protection/code-owner enforcement status and document the host-level limitation if it remains disabled;
-14. create `v0.1.1` only after the above evidence is green.
+14. create `v1.1.0` only after the above evidence is green.
 
 ## Tagging rule
 
 The intended release tag is:
 
 ```text
-v0.1.1
+v1.1.0
 ```
 
 Create it from the exact commit containing the final verified release source:
 
 ```bash
-git tag -a v0.1.1 -m "LibraCore v0.1.1"
-git push origin v0.1.1
+git tag -a v1.1.0 -m "LibraCore v1.1.0"
+git push origin v1.1.0
 ```
 
 Do not create or publish the tag early. Do not force-move a published release tag. If a pre-publication error is found, fix the source and create the release tag from the corrected commit.
 
-## Planned v0.1.1 release contents
+## Planned v1.1.0 release contents
 
 The release should describe the mature library-management functionality already present, including catalog and physical-copy management, members and account management, circulation and fines, reservations/waitlists, branch-aware inventory, reporting and audit capabilities, CSV import/export, notification adapters, secure sessions and role authorization, responsive role-aware web UI, PostgreSQL/Flyway persistence, backup/restore tooling, Recovery Drill automation, CI/security automation, and engineering documentation.
 
 ## Release publication status
 
-**`v0.1.1` is not yet published.**
+**`v1.1.0` is not yet published.**
 
-The release notes can be prepared now, but the final notes must distinguish implemented functionality from checks actually observed passing. Publication should occur only after the tag-triggered release workflow succeeds.
+Release notes can be prepared now, but publication should occur only after the final release-source verification and tag-triggered release workflow succeed.
 
 ## Continuation rule
 
-The next work session should continue from this file rather than reopening the old `2.0.12` release plan. Prioritize generated-lockfile closure, current CI/recovery evidence, release-source consistency, and final release publication over unrelated feature expansion.
+The next work session should continue from this file using `v1.1.0` as the sole active release target. Do not reopen the superseded `0.1.1` plan or the old `2.0.12` release plan. Prioritize lockfile verification, current CI/recovery evidence, release-source consistency, and final release publication over unrelated feature expansion.
