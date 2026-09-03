@@ -2,7 +2,7 @@
 
 **Production-minded, open-source library management for cataloging, circulation, members, branches, policy, reporting, and auditability.**
 
-> Current release candidate: **1.1.0**
+> Current release candidate: **1.1.1**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-sanskarIN-FFDD00?logo=buy-me-a-coffee&logoColor=000000)](https://buymeacoffee.com/sanskarIN)
@@ -17,9 +17,9 @@ The project intentionally favors explicit business rules, database migrations, d
 
 ## Status
 
-The executable backend and frontend manifests are aligned to **1.1.0**. The committed `frontend/package-lock.json` is the canonical generated dependency graph and must remain synchronized with the frontend manifest. `what_changed.md` is the canonical continuation/handoff document and records completed work, verification evidence, limitations, recent commits, and the next exact release tasks. A version value in source does not by itself mean that the corresponding GitHub release has passed every release gate.
+The executable backend and frontend manifests are aligned to **1.1.1**. The committed `frontend/package-lock.json` is the canonical generated dependency graph and must remain synchronized with the frontend manifest. `what_changed.md` is the canonical continuation/handoff document and records completed work, verification evidence, limitations, recent commits, and the next exact release tasks. A version value in source does not by itself mean that the corresponding GitHub release has passed every release gate.
 
-The current 1.1.0 gates are lockfile closure, current CI/security/recovery evidence, role-based smoke testing, accessibility evidence, and repository branch-protection enforcement. Do not infer a published stable release until those gates are closed and `v1.1.0` is tagged and successfully processed by release automation.
+The current 1.1.1 gates are lockfile closure, current CI/security/recovery evidence, role-based smoke testing, accessibility evidence, and repository branch-protection enforcement. Do not infer a published stable release until those gates are closed and `v1.1.1` is tagged and successfully processed by release automation.
 
 ## Feature map
 
@@ -150,7 +150,7 @@ npm run dev
 
 Default development UI: `http://localhost:5173`.
 
-> `frontend/package-lock.json` is committed and is the canonical resolved frontend dependency graph. Before final `v1.1.0` tagging, verify it with the supported Node/npm toolchain so its root package metadata matches `1.1.0`. Use `npm ci` for clean/reproducible installs. Use `npm install` only when intentionally changing dependency declarations and review the resulting lockfile diff together with `package.json`.
+> `frontend/package-lock.json` is committed and is the canonical resolved frontend dependency graph. Before final `v1.1.1` tagging, verify it with the supported Node/npm toolchain so its root package metadata matches `1.1.1`. Use `npm ci` for clean/reproducible installs. Use `npm install` only when intentionally changing dependency declarations and review the resulting lockfile diff together with `package.json`.
 
 ## Configuration
 
@@ -175,10 +175,10 @@ The bootstrap administrator is optional and intended only for explicitly configu
 From the repository root:
 
 ```bash
-node scripts/check-version.mjs 1.1.0
+node scripts/check-version.mjs 1.1.1
 ```
 
-This fails if `frontend/package.json`, `backend/pom.xml`, and an optional expected release version disagree.
+This fails if `frontend/package.json`, `frontend/package-lock.json`, `backend/pom.xml`, and the optional expected release version disagree.
 
 ### Backend
 
@@ -266,7 +266,7 @@ The intended release gate includes:
 - Flyway migration verification from a clean database
 - frontend lockfile presence + `npm ci`
 - frontend lint + strict type checks + tests + production build
-- manifest/tag version synchronization
+- manifest/tag version synchronization including lockfile root metadata
 - accessibility checks
 - dependency/security analysis
 - documentation/link review
@@ -292,9 +292,9 @@ Read [`docs/deployment.md`](docs/deployment.md) and [`docs/troubleshooting.md`](
 
 ## Releases
 
-LibraCore source manifests are currently prepared for **1.1.0**. A release tag must match the backend/frontend manifest version; release automation validates this before packaging. The release workflow requires the committed frontend lockfile, performs reproducible frontend verification, starts the packaged backend against PostgreSQL, requires a healthy actuator response, and packages the backend JAR without a hard-coded historical filename.
+LibraCore source manifests are currently prepared for **1.1.1**. A release tag must match the backend/frontend/lockfile version; release automation validates this before packaging. The release workflow requires the committed frontend lockfile, performs reproducible frontend verification, starts the packaged backend against PostgreSQL, requires a healthy actuator response, and packages the backend JAR without a hard-coded historical filename.
 
-Release procedure, migration checks, rollback expectations, artifact verification, and release-note requirements are in [`docs/release.md`](docs/release.md).
+Prepared release notes live in [`docs/release-notes/v1.1.1.md`](docs/release-notes/v1.1.1.md). Release procedure, migration checks, rollback expectations, artifact verification, and release-note requirements are in [`docs/release.md`](docs/release.md).
 
 ## Contributing
 
