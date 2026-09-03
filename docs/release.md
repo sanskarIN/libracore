@@ -1,6 +1,6 @@
 # Release Process
 
-LibraCore does not call a release ready merely because source files exist. A release requires reproducible verification evidence. The current source manifests are prepared for **1.1.0**, and the npm-generated `frontend/package-lock.json` remains committed.
+LibraCore does not call a release ready merely because source files exist. A release requires reproducible verification evidence. The current source manifests are prepared for **1.1.1**, and the npm-generated `frontend/package-lock.json` remains committed.
 
 ## Pre-release checklist
 
@@ -9,14 +9,14 @@ LibraCore does not call a release ready merely because source files exist. A rel
 3. Confirm no real secrets/private data are tracked.
 4. Verify release-version synchronization from the repository root:
    ```bash
-   node scripts/check-version.mjs 1.1.0
+   node scripts/check-version.mjs 1.1.1
    ```
 5. Verify backend:
    ```bash
    cd backend
    mvn clean verify
    ```
-6. Confirm `frontend/package-lock.json` is present, reviewed with any dependency declaration changes, and synchronized with `frontend/package.json`. The lockfile must remain a generated npm lockfile; never hand-edit or synthesize it.
+6. Confirm `frontend/package-lock.json` is present and generated from the same frontend manifest. Never hand-edit or synthesize the lockfile.
 7. Verify frontend reproducibly:
    ```bash
    cd frontend
@@ -29,29 +29,29 @@ LibraCore does not call a release ready merely because source files exist. A rel
 11. Run dependency/static-security automation and review failures.
 12. Perform or review a current backup/restore drill.
 13. Check documentation links/configuration against the actual tree.
-14. Confirm the intended tag exactly matches both executable manifests. For this release the tag is `v1.1.0`.
+14. Confirm the intended tag exactly matches frontend, backend, and lockfile versions. For this release the tag is `v1.1.1`.
 15. Do not cut a stable release while required verification remains unobserved or a release-blocking limitation remains open in `what_changed.md`.
 
 ## Versioning
 
-LibraCore uses Semantic Versioning for release identifiers. The backend Maven project version and frontend npm package version must always match. `scripts/check-version.mjs` is the executable guard for that invariant, and `.github/workflows/version-sync.yml` enforces it on relevant changes.
+LibraCore uses Semantic Versioning for release identifiers. The backend Maven project version, frontend npm package version, and frontend lockfile root version must match. `scripts/check-version.mjs` is the executable guard for that invariant, and `.github/workflows/version-sync.yml` enforces manifest synchronization on relevant changes.
 
 ## Tagging
 
 After the release commit passes every gate:
 
 ```bash
-git tag -a v1.1.0 -m "LibraCore v1.1.0"
-git push origin v1.1.0
+git tag -a v1.1.1 -m "LibraCore v1.1.1"
+git push origin v1.1.1
 ```
 
-The release workflow verifies that the pushed tag, `backend/pom.xml`, and `frontend/package.json` all represent the same version. Do not move a published release tag. Correct mistakes with a new version.
+The release workflow verifies that the pushed tag and all three version-bearing frontend/backend manifests represent the same version. Do not move a published release tag. Correct mistakes with a new version.
 
 ## Release workflow guarantees
 
-`.github/workflows/release.yml` intentionally refuses to publish when the frontend lockfile is absent. It also:
+`.github/workflows/release.yml` intentionally refuses to publish when the frontend lockfile is absent or inconsistent. It also:
 
-- validates the release tag against the executable manifests before expensive build work;
+- validates the release tag against frontend, backend, and lockfile versions before expensive build work;
 - runs backend Maven verification against PostgreSQL;
 - starts the packaged backend JAR produced by the build;
 - verifies the packaged service reaches `/actuator/health` successfully against PostgreSQL before publication;
@@ -60,20 +60,20 @@ The release workflow verifies that the pushed tag, `backend/pom.xml`, and `front
 - discovers the packaged backend JAR without a hard-coded historical version filename;
 - packages the frontend production build;
 - generates SHA-256 checksums;
-- publishes artifacts from the tagged source;
+- publishes the repository-managed `docs/release-notes/v1.1.1.md` as the release description;
 - always attempts to stop the temporary packaged backend process and prints its log when the release job fails.
 
-The release checkout does not persist Git credentials after checkout. Read-only verification workflows follow the same least-privilege pattern; only the explicit lockfile bootstrap retains credentials because it may need to push a generated lockfile to `main`.
+The release checkout does not persist Git credentials after checkout. Read-only verification workflows follow the same least-privilege pattern; only the explicit lockfile synchronization workflow retains credentials because it may need to push a generated lockfile to `main`.
 
 ## CI freshness
 
-Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and the lockfile bootstrap use workflow concurrency so superseded runs do not consume runner capacity or report stale results as the newest verification. Release publication itself remains tag-scoped and is never silently substituted by a branch build.
+Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and the lockfile synchronization workflow use workflow concurrency so superseded runs do not consume runner capacity or report stale results as the newest verification. Release publication itself remains tag-scoped and is never silently substituted by a branch build.
 
 ## Artifacts
 
 A release may include the backend JAR, frontend production bundle/archive, checksums, and source archives. Artifacts must be produced from the tagged commit by the release workflow or another documented reproducible process.
 
-The lockfile bootstrap's `frontend-package-lock-generated` artifact is a short-lived verification/recovery aid, **not** a release artifact. The canonical dependency state remains the reviewed `frontend/package-lock.json` committed to the release source tree.
+The lockfile synchronization workflow's generated lockfile is source metadata, **not** a release artifact. The canonical dependency state remains the reviewed `frontend/package-lock.json` committed to the release source tree.
 
 ## Migration and rollback
 
