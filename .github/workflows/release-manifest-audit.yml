@@ -21,9 +21,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version to audit (for example 1.1.8)'
+        description: 'Release version to audit'
         required: true
-        default: '1.1.8'
+        default: '1.1.9'
         type: string
 
 permissions:
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      RELEASE_VERSION: ${{ inputs.version || '1.1.8' }}
+      RELEASE_VERSION: ${{ inputs.version || '1.1.9' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
