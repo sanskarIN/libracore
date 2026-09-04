@@ -54,7 +54,7 @@ app:
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
   session:
-    ttl-hours: 12
+    ttl-hours: ${APP_SESSION_TTL_HOURS:12}
   bootstrap-admin:
     email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
     password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
