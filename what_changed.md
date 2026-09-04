@@ -1,49 +1,39 @@
-# LibraCore — 1.1.7 Engineering Handoff
+# LibraCore — 1.1.8 Engineering Handoff
 
 **Audit/update date:** 2026-09-04  
 **Repository:** `sanskarIN/libracore`  
 **Branch:** `main`  
-**Active release target:** `v1.1.7`  
-**Previous published stable release:** `v1.1.6`  
+**Active release target:** `v1.1.8`  
+**Previous published stable release:** `v1.1.7`  
 **Commit identity:** `Sanskar <sanskarin@outlook.in>`
 
 This is the canonical continuation record for LibraCore. Published release history must not be rewritten or force-moved. The historical v1.1.3 workflow failure remains audit history.
 
-## v1.1.6 closure
+## v1.1.7 closure
 
-`v1.1.6` is published as a stable release. Its performance and deployment-validation work remains immutable.
+`v1.1.7` is published as a stable release. Its reliability and release-hardening work remains immutable.
 
-## v1.1.7 implementation
+## v1.1.8 implementation
 
-Focused commits for the reliability and release-hardening line:
+Focused commits for the release-integrity and developer-experience line:
 
-- `chore(release): advance backend to 1.1.7`
-- `chore(release): advance frontend to 1.1.7`
-- `docs(release): add v1.1.7 reliability hardening notes`
-- `docs(changelog): record v1.1.7 release-hardening line`
-- `docs(roadmap): move reliability hardening into 1.1.7`
+- `chore(release): advance backend to 1.1.8`
+- `chore(release): advance frontend to 1.1.8`
+- `fix(release): restore backend manifest and set 1.1.8`
+- `fix(release): restore frontend manifest and set 1.1.8`
+- `docs(release): add v1.1.8 release notes`
+- `ci(release): add release manifest audit workflow`
+- `docs(roadmap): open v1.1.8 release-integrity line`
 
-All listed commits use `Sanskar <sanskarin@outlook.in>`.
+All release commits use `Sanskar <sanskarin@outlook.in>`.
 
-## Reliability scope
+## Release-integrity scope
 
-v1.1.7 is a maintenance and release-hardening line. It preserves the operational behavior established in v1.1.6 while making release promotion more deterministic and auditable.
-
-Required validation includes:
-
-- synchronized backend, frontend, and lockfile versions;
-- exact tag-to-commit correspondence;
-- complete release-blocking CI;
-- packaged startup, liveness, readiness, and build-info verification;
-- browser smoke and accessibility evidence;
-- deployment configuration review;
-- tracked-secret review;
-- artifact and SHA-256 checksum review;
-- rollback evidence.
+v1.1.8 focuses on deterministic version alignment and earlier detection of release-documentation drift. The new release-manifest audit checks the backend version, frontend version, frontend lockfile root version, and repository-managed release notes as a single release contract.
 
 ## Operational invariants
 
-The v1.1.6 operational model remains in force:
+The v1.1.7 operational model remains in force:
 
 - Actuator exposure: `health,info`;
 - health details: hidden;
@@ -55,38 +45,39 @@ The v1.1.6 operational model remains in force:
 
 ## Manifest state
 
-- `backend/pom.xml` → `1.1.7`;
-- `frontend/package.json` → `1.1.7`;
-- `frontend/package-lock.json` → must be synchronized to `1.1.7` by the repository's version/lockfile automation.
+- `backend/pom.xml` → `1.1.8`;
+- `frontend/package.json` → `1.1.8`;
+- `frontend/package-lock.json` → must be synchronized to `1.1.8` before publication.
 
-## v1.1.7 remaining release gates
+## v1.1.8 release gates
 
-1. confirm the lockfile root metadata is `1.1.7`;
-2. run the repository version guard;
-3. pass Backend CI;
-4. pass Frontend CI;
-5. pass Version Sync;
-6. pass CodeQL;
-7. pass Dependency Review/security checks;
-8. pass Recovery Drill;
-9. pass Performance Fixture CI;
-10. pass Performance Thresholds CI;
-11. verify packaged startup and liveness;
-12. verify database-aware readiness;
-13. verify `/actuator/info` contains only expected non-sensitive build metadata;
-14. complete browser smoke journeys;
-15. complete accessibility validation;
-16. review deployment configuration and tracked secrets;
-17. identify the exact final verified commit;
-18. create `v1.1.7` only from that exact commit;
-19. confirm the tag-scoped release workflow succeeds;
-20. review artifacts and SHA-256 checksums;
-21. publish `v1.1.7` as stable/latest.
+1. confirm the lockfile root metadata is `1.1.8`;
+2. pass the release-manifest audit;
+3. pass the repository version guard;
+4. pass Backend CI;
+5. pass Frontend CI;
+6. pass Version Sync;
+7. pass CodeQL;
+8. pass Dependency Review/security checks;
+9. pass Recovery Drill;
+10. pass Performance Fixture CI;
+11. pass Performance Thresholds CI;
+12. verify packaged startup and liveness;
+13. verify database-aware readiness;
+14. verify `/actuator/info` contains only expected non-sensitive build metadata;
+15. complete browser smoke journeys;
+16. complete accessibility validation;
+17. review deployment configuration and tracked secrets;
+18. identify the exact final verified commit;
+19. create `v1.1.8` only from that exact commit;
+20. confirm the tag-scoped release workflow succeeds;
+21. review artifacts and SHA-256 checksums;
+22. publish `v1.1.8` as stable/latest.
 
 ## Release sequence
 
 ```text
-v1.0.0 → v1.1.0 → v1.1.1 → v1.1.2 → v1.1.3 → v1.1.4 → v1.1.5 → v1.1.6 → v1.1.7
+v1.0.0 → v1.1.0 → v1.1.1 → v1.1.2 → v1.1.3 → v1.1.4 → v1.1.5 → v1.1.6 → v1.1.7 → v1.1.8
 ```
 
 The historical `2.0.12` and temporary `0.1.1` preparation lines remain audit history and are not active release targets.
