@@ -6,10 +6,42 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 ### Next
 
-- Future work belongs on the next planned release line after `1.1.4`.
+- Future work belongs on the next planned release line after `1.1.5`.
 - Do not treat unreleased source changes as part of a published release until the corresponding tag and release workflow succeed.
 
-## [1.1.4] - 2026-09-04 — maintenance release preparation
+## [1.1.5] - 2026-09-04 — operational observability and diagnostics
+
+### Added
+
+- Added Spring Boot build-info generation to packaged backend artifacts.
+- Enabled the existing `/actuator/info` endpoint to report non-sensitive build metadata for deployment identification.
+
+### Security and operations
+
+- Kept actuator web exposure limited to `health` and `info`.
+- Kept health details hidden with `show-details: never`.
+- Explicitly disabled environment and Git metadata contributors so `/actuator/info` does not expose environment values, credentials, datasource configuration, or repository metadata.
+
+### Changed
+
+- Advanced the backend Maven project version to `1.1.5`.
+- Advanced the frontend npm package version to `1.1.5`.
+- Continued the committed frontend lockfile synchronization policy.
+- Added repository-managed `v1.1.5` release notes.
+
+### Verification
+
+- The release version guard remains authoritative for backend, frontend, and frontend lockfile root synchronization.
+- Packaged backend verification must confirm build metadata is present and `/actuator/info` identifies the expected release without sensitive environment data.
+- The tag-scoped release workflow remains the publication gate for packaged artifacts and checksums.
+
+### Release status
+
+- `v1.1.5` is the active observability release target until all release gates close and the tag-scoped workflow publishes successfully.
+- `v1.1.4` is the published stable maintenance release.
+- The attempted `v1.1.3` workflow failure remains immutable audit history.
+
+## [1.1.4] - 2026-09-04 — published maintenance and performance reliability release
 
 ### Changed
 
@@ -25,16 +57,14 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 ### Verification
 
 - The release version guard remains responsible for backend, frontend, and frontend lockfile root synchronization.
-- The committed frontend lockfile is synchronized to `1.1.4` on the current `main` source.
+- The committed frontend lockfile is synchronized to `1.1.4`.
 - The performance fixture workflow validates its safety gates and deterministic reload behavior.
-- The tag-scoped release workflow remains the publication gate for packaged artifacts and checksums.
+- The tag-scoped release workflow validates packaged artifacts and checksums.
 
 ### Release status
 
-- `v1.1.4` is the active maintenance release target.
-- `v1.1.2` remains a published stable release.
+- `v1.1.4` is published as a stable release.
 - The `v1.1.3` tagged release workflow failure is retained as diagnostic history; existing tags and published releases must not be rewritten.
-- The latest `main` commit contains the performance-fixture work, but release-blocking CI/manual evidence has not been established by the available GitHub status data in this handoff, so `v1.1.4` must not yet be described as fully verified or published.
 
 ## [1.1.3] - 2026-09-03 — maintenance release preparation
 
