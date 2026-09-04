@@ -1,0 +1,99 @@
+name: Release Manifest Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/pom.xml'
+      - 'frontend/package.json'
+      - 'frontend/package-lock.json'
+      - 'docs/release-notes/**'
+      - 'CHANGELOG.md'
+      - 'ROADMAP.md'
+  pull_request:
+    paths:
+      - 'backend/pom.xml'
+      - 'frontend/package.json'
+      - 'frontend/package-lock.json'
+      - 'docs/release-notes/**'
+      - 'CHANGELOG.md'
+      - 'ROADMAP.md'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version to audit (for example 1.1.8)'
+        required: true
+        default: '1.1.8'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RELEASE_VERSION: ${{ inputs.version || '1.1.8' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Audit release manifests and documentation
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          import sys
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          version = __import__('os').environ['RELEASE_VERSION']
+
+          pom = Path('backend/pom.xml')
+          package_json = Path('frontend/package.json')
+          lockfile = Path('frontend/package-lock.json')
+          release_notes = Path(f'docs/release-notes/v{version}.md')
+
+          if not all(p.exists() for p in [pom, package_json, lockfile, release_notes]):
+              missing = [str(p) for p in [pom, package_json, lockfile, release_notes] if not p.exists()]
+              print('Missing required release files:', ', '.join(missing))
+              sys.exit(1)
+
+          ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
+          root = ET.parse(pom).getroot()
+          backend_version = root.findtext('m:version', namespaces=ns)
+          frontend_version = json.loads(package_json.read_text())['version']
+          lock = json.loads(lockfile.read_text())
+          lock_version = lock['packages']['']['version']
+
+          values = {
+              'backend': backend_version,
+              'frontend': frontend_version,
+              'lockfile': lock_version,
+          }
+          print(values)
+
+          if any(value != version for value in values.values()):
+              print(f'Expected every manifest to equal {version!r}')
+              sys.exit(1)
+
+          changelog = Path('CHANGELOG.md').read_text()
+          roadmap = Path('ROADMAP.md').read_text()
+          notes = release_notes.read_text()
+
+          required_markers = [f'[{version}]', f'`{version}`', f'v{version}']
+          if f'[{version}]' not in changelog:
+              print('CHANGELOG.md does not contain the requested release heading')
+              sys.exit(1)
+          if f'v{version}' not in roadmap or f'v{version}' not in notes:
+              print('Release documentation is missing the requested version marker')
+              sys.exit(1)
+
+          print('Release manifest audit passed for', version)
+          PY
