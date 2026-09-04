@@ -6,7 +6,7 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 
 - [x] Advance backend executable manifest to `1.1.10`.
 - [x] Advance frontend executable manifest to `1.1.10`.
-- [ ] Synchronize and verify the frontend lockfile to `1.1.10`.
+- [x] Synchronize and verify the frontend lockfile to `1.1.10`.
 - [x] Add repository-managed `v1.1.10` release notes.
 - [x] Create a dedicated `release/v1.1.10` preparation branch.
 - [x] Advance the release-manifest audit default to `1.1.10`.
