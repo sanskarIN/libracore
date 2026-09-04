@@ -39,6 +39,10 @@ A breaking change removes or renames a required field/endpoint, changes an exist
 
 LibraCore uses Flyway-managed database migrations. Released migrations are immutable: a migration that has already shipped must never be edited or repurposed. Schema changes require a new forward migration, and release validation should exercise migration startup against a disposable or isolated database before production deployment.
 
+## Release tag policy
+
+Published tags are immutable release anchors. A published tag must point to the exact verified commit for that release and must never be force-moved or silently retargeted.
+
 ## Deprecation
 
 A deprecated API should remain functional for a documented transition period whenever practical. Deprecation must be visible in release documentation and accompanied by a replacement path. Removal requires an explicit release decision rather than an incidental refactor.
@@ -59,5 +63,6 @@ Clients should ignore unknown response fields, use documented machine-readable e
 - [ ] Authorization tests cover allowed and denied roles.
 - [ ] Persistence/migration impact reviewed.
 - [ ] Flyway migration policy reviewed.
+- [ ] Published-tag immutability policy reviewed.
 - [ ] Release notes and changelog updated.
 - [ ] Security and privacy impact reviewed.
