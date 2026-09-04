@@ -1,138 +1,92 @@
-# LibraCore — 1.1.6 Engineering Handoff
+# LibraCore — 1.1.7 Engineering Handoff
 
 **Audit/update date:** 2026-09-04  
 **Repository:** `sanskarIN/libracore`  
 **Branch:** `main`  
-**Active release target:** `v1.1.6`  
-**Previous published stable release:** `v1.1.5`  
+**Active release target:** `v1.1.7`  
+**Previous published stable release:** `v1.1.6`  
 **Commit identity:** `Sanskar <sanskarin@outlook.in>`
 
-This is the canonical continuation record for LibraCore. Published release history must not be rewritten or force-moved. The attempted `v1.1.3` release workflow failure remains audit history.
+This is the canonical continuation record for LibraCore. Published release history must not be rewritten or force-moved. The historical v1.1.3 workflow failure remains audit history.
 
-## v1.1.5 closure
+## v1.1.6 closure
 
-`v1.1.5` is now published as the stable/latest release. Its observability work remains immutable.
+`v1.1.6` is published as a stable release. Its performance and deployment-validation work remains immutable.
 
-## v1.1.6 implementation completed so far
+## v1.1.7 implementation
 
-Focused commits for the performance and deployment-validation line:
+Focused commits for the reliability and release-hardening line:
 
-- `chore(release): advance backend to 1.1.6`
-- `feat(operations): add safe startup and readiness probes`
-- `fix(config): keep readiness probes under one health endpoint configuration`
-- `chore(release): advance frontend to 1.1.6`
-- `test(performance): add repeatable database latency thresholds`
-- `ci(performance): enforce repeatable latency thresholds on safe fixture`
-- `docs(release): add v1.1.6 performance and deployment notes`
-- `docs(changelog): record v1.1.6 performance and deployment work`
-- `docs(roadmap): move performance validation into 1.1.6`
-- `docs(frontend): clarify deployment-ready diagnostics metadata`
-- `ci(release): verify v1.1.6 readiness and safe build metadata`
-- `ci(version): validate synchronized manifests from engineering handoff changes`
+- `chore(release): advance backend to 1.1.7`
+- `chore(release): advance frontend to 1.1.7`
+- `docs(release): add v1.1.7 reliability hardening notes`
+- `docs(changelog): record v1.1.7 release-hardening line`
+- `docs(roadmap): move reliability hardening into 1.1.7`
 
 All listed commits use `Sanskar <sanskarin@outlook.in>`.
 
-## Performance validation
+## Reliability scope
 
-The existing isolated PostgreSQL performance fixture is now paired with deterministic latency checks for representative catalog, circulation, and reservation queries.
+v1.1.7 is a maintenance and release-hardening line. It preserves the operational behavior established in v1.1.6 while making release promotion more deterministic and auditable.
 
-Default acceptance threshold:
+Required validation includes:
 
-- maximum representative query execution time: `250 ms`;
-- override: `PERF_MAX_QUERY_MS`;
-- benchmark database convention: database name must end in `_perf` or `_benchmark`;
-- fixture writes require `PERF_FIXTURE_ALLOW_WRITE=YES`.
+- synchronized backend, frontend, and lockfile versions;
+- exact tag-to-commit correspondence;
+- complete release-blocking CI;
+- packaged startup, liveness, readiness, and build-info verification;
+- browser smoke and accessibility evidence;
+- deployment configuration review;
+- tracked-secret review;
+- artifact and SHA-256 checksum review;
+- rollback evidence.
 
-Production databases must never be used for the benchmark workflow.
+## Operational invariants
 
-## Startup and readiness
+The v1.1.6 operational model remains in force:
 
-The backend retains the restricted `health,info` Actuator surface and now enables Spring Boot health probes.
-
-- liveness: `livenessState`;
-- readiness: `readinessState,db`;
-- health details remain hidden;
-- environment metadata remains disabled;
-- Git metadata remains disabled.
-
-The readiness configuration is intentionally database-aware so an unavailable database cannot be reported as ready.
+- Actuator exposure: `health,info`;
+- health details: hidden;
+- environment metadata: disabled;
+- Git metadata: disabled;
+- liveness: application liveness state;
+- readiness: readiness state plus database health;
+- performance fixture writes: explicitly gated and isolated from production databases.
 
 ## Manifest state
 
-- `backend/pom.xml` → `1.1.6`;
-- `frontend/package.json` → `1.1.6`;
-- `frontend/package-lock.json` → synchronized to `1.1.6` by the repository's lockfile automation.
+- `backend/pom.xml` → `1.1.7`;
+- `frontend/package.json` → `1.1.7`;
+- `frontend/package-lock.json` → must be synchronized to `1.1.7` by the repository's version/lockfile automation.
 
-`scripts/check-version.mjs` remains the executable guard for all three version-bearing manifests.
+## v1.1.7 remaining release gates
 
-## v1.1.6 remaining release gates
-
-1. run `node scripts/check-version.mjs 1.1.6`;
-2. pass Backend CI;
-3. pass Frontend CI;
-4. pass Version Sync;
-5. pass CodeQL;
-6. pass Dependency Review/security checks;
-7. pass Recovery Drill;
-8. pass Performance Fixture CI;
-9. pass Performance Thresholds CI;
-10. verify packaged `/actuator/info` contains build metadata for `1.1.6`;
-11. verify liveness and readiness behavior;
-12. verify readiness reflects database availability;
-13. complete role-based browser smoke journeys;
-14. complete accessibility review;
-15. review deployment configuration and tracked secrets;
-16. identify the exact final verified commit;
-17. create `v1.1.6` only from that exact commit;
-18. confirm the tag-scoped release workflow succeeds;
-19. review generated release artifacts and SHA-256 checksums;
-20. confirm the GitHub release is published as stable/latest.
+1. confirm the lockfile root metadata is `1.1.7`;
+2. run the repository version guard;
+3. pass Backend CI;
+4. pass Frontend CI;
+5. pass Version Sync;
+6. pass CodeQL;
+7. pass Dependency Review/security checks;
+8. pass Recovery Drill;
+9. pass Performance Fixture CI;
+10. pass Performance Thresholds CI;
+11. verify packaged startup and liveness;
+12. verify database-aware readiness;
+13. verify `/actuator/info` contains only expected non-sensitive build metadata;
+14. complete browser smoke journeys;
+15. complete accessibility validation;
+16. review deployment configuration and tracked secrets;
+17. identify the exact final verified commit;
+18. create `v1.1.7` only from that exact commit;
+19. confirm the tag-scoped release workflow succeeds;
+20. review artifacts and SHA-256 checksums;
+21. publish `v1.1.7` as stable/latest.
 
 ## Release sequence
 
 ```text
-v1.0.0 → v1.1.0 → v1.1.1 → v1.1.2 → v1.1.3 → v1.1.4 → v1.1.5 → v1.1.6
+v1.0.0 → v1.1.0 → v1.1.1 → v1.1.2 → v1.1.3 → v1.1.4 → v1.1.5 → v1.1.6 → v1.1.7
 ```
 
 The historical `2.0.12` and temporary `0.1.1` preparation lines remain audit history and are not active release targets.
-
-## Verification commands
-
-From the repository root:
-
-```bash
-node scripts/check-version.mjs 1.1.6
-```
-
-Backend:
-
-```bash
-cd backend
-mvn clean verify
-```
-
-Frontend:
-
-```bash
-cd frontend
-npm ci --ignore-scripts --no-audit --no-fund
-npm run check
-```
-
-Performance fixture:
-
-```bash
-bash scripts/load-performance-fixture.sh
-bash scripts/check-performance-fixture.sh
-bash scripts/check-performance-thresholds.sh
-```
-
-## Tagging rule
-
-Do not create `v1.1.6` until the exact final source has passed all release-blocking gates. Do not rewrite or force-move `v1.1.6` after publication.
-
-## Project links
-
-- GitHub: https://github.com/sanskarIN/libracore
-- Maintainer: https://github.com/sanskarIN
-- BuyMeACoffee: https://buymeacoffee.com/sanskarIN
