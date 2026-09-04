@@ -57,7 +57,11 @@
             <id>enforce-java</id>
             <goals><goal>enforce</goal></goals>
             <configuration>
-              <rules><requireJavaVersion><version>[25,26)</version></rules>
+              <rules>
+                <requireJavaVersion>
+                  <version>[25,26)</version>
+                </requireJavaVersion>
+              </rules>
             </configuration>
           </execution>
         </executions>
