@@ -7,12 +7,13 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 - [x] Preserve the published `v1.0.0`, `v1.1.0`, `v1.1.1`, and `v1.1.2` history.
 - [x] Advance the backend executable manifest to `1.1.4`.
 - [x] Advance the frontend executable manifest to `1.1.4`.
+- [x] Synchronize the frontend lockfile root metadata to `1.1.4` using the supported npm workflow.
 - [x] Add repository-managed `v1.1.4` release notes.
 - [x] Harden the packaged-backend health gate after the v1.1.3 tagged run failed during startup health verification.
 - [x] Make release-note selection derive from the pushed tag.
 - [x] Automate frontend lockfile synchronization after manifest changes on `main`.
-- [ ] Synchronize and commit `frontend/package-lock.json` with version `1.1.4` using the supported npm toolchain.
-- [ ] Observe successful Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, and Recovery Drill on the exact final source; fix every failure.
+- [x] Add repeatable PostgreSQL performance fixtures with explicit safety gates and CI repeatability checks.
+- [ ] Observe successful Backend CI, Frontend CI, Version Sync, CodeQL, Dependency Review, Recovery Drill, and Performance Fixture CI on the exact final source; fix every failure.
 - [ ] Complete role-based browser smoke testing and accessibility evidence.
 - [ ] Review repository links, configuration, tracked secrets, and release artifacts.
 - [ ] Run `node scripts/check-version.mjs 1.1.4` against the exact final release checkout.
@@ -45,7 +46,7 @@ A temporary `0.1.1` release-rebaseline pass was superseded after confirming the 
 ## 2.1.x — Operational hardening
 
 - Expand observability and operational diagnostics.
-- Strengthen performance measurement and representative load testing.
+- Strengthen performance measurement and representative load testing using the repeatable fixture baseline.
 - Extend branch-level workflows and reporting.
 - Improve deployment automation and environment-specific configuration validation.
 
