@@ -2,6 +2,40 @@
 
 The roadmap describes direction, not a promise that an unchecked item already exists. `what_changed.md` is the implementation handoff and `CHANGELOG.md` records delivered behavior.
 
+## 1.1.10 — Verification, reproducibility, and release readiness
+
+- [x] Advance backend executable manifest to `1.1.10`.
+- [x] Advance frontend executable manifest to `1.1.10`.
+- [ ] Synchronize and verify the frontend lockfile to `1.1.10`.
+- [x] Add repository-managed `v1.1.10` release notes.
+- [x] Create a dedicated `release/v1.1.10` preparation branch.
+- [x] Advance the release-manifest audit default to `1.1.10`.
+- [ ] Run the complete release-blocking CI suite against the final source.
+- [ ] Complete repository version-guard validation.
+- [ ] Complete CodeQL and dependency/security validation.
+- [ ] Verify packaged startup, liveness, readiness, and `/actuator/info` behavior.
+- [ ] Complete browser smoke journeys and accessibility evidence.
+- [ ] Review deployment configuration and tracked secrets.
+- [ ] Review artifact and SHA-256 checksum output.
+- [ ] Identify the exact final verified commit.
+- [ ] Create `v1.1.10` only from the exact verified commit.
+- [ ] Confirm tag-scoped validation succeeds.
+- [ ] Publish stable/latest `v1.1.10`.
+
+## 1.1.9 — Release automation, testability, and maintenance
+
+- [x] Advance backend executable manifest to `1.1.9`.
+- [x] Advance frontend executable manifest to `1.1.9`.
+- [x] Synchronize and verify the frontend lockfile to `1.1.9`.
+- [x] Add repository-managed `v1.1.9` release notes.
+- [x] Add a deterministic release-readiness audit for version, documentation, and release metadata.
+- [x] Strengthen CI failure diagnostics without weakening release gates.
+- [x] Verify backend/frontend test commands remain reproducible on supported toolchain versions.
+- [ ] Review dependency drift and security advisories.
+- [ ] Review deployment and rollback documentation for 1.1.x consistency.
+- [ ] Complete release-blocking CI and tag-scoped validation.
+- [ ] Create and publish stable `v1.1.9` only after all gates pass.
+
 ## 1.1.8 — Release integrity and developer experience
 
 - [x] Advance backend executable manifest to `1.1.8`.
@@ -16,20 +50,6 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 - [ ] Review deployment configuration and tracked secrets.
 - [ ] Review artifact and checksum output.
 - [ ] Create and publish `v1.1.8` only from the exact verified commit.
-
-## 1.1.9 — Release automation, testability, and maintenance
-
-- [ ] Advance backend executable manifest to `1.1.9`.
-- [ ] Advance frontend executable manifest to `1.1.9`.
-- [ ] Synchronize and verify the frontend lockfile to `1.1.9`.
-- [ ] Add repository-managed `v1.1.9` release notes.
-- [ ] Add a deterministic release-readiness audit for version, documentation, and release metadata.
-- [ ] Strengthen CI failure diagnostics without weakening release gates.
-- [ ] Verify backend/frontend test commands remain reproducible on supported toolchain versions.
-- [ ] Review dependency drift and security advisories.
-- [ ] Review deployment and rollback documentation for 1.1.x consistency.
-- [ ] Complete release-blocking CI and tag-scoped validation.
-- [ ] Create and publish stable `v1.1.9` only after all gates pass.
 
 ## 1.1.7 — Reliability and release hardening
 
