@@ -20,6 +20,7 @@ This checklist is the release contract for LibraCore v1.2.0 and can be reused fo
 - [ ] Frontend deterministic tests pass.
 - [ ] Frontend production build passes.
 - [ ] Version Sync passes.
+- [ ] API contract policy validation passes.
 - [ ] CodeQL passes.
 - [ ] Dependency review/security checks pass.
 - [ ] Recovery Drill passes.
