@@ -6,8 +6,35 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 ### Next
 
-- Future work belongs on the next planned release line after `1.1.9`.
+- Future work belongs on the next planned release line after `1.1.10`.
 - Do not treat unreleased source changes as part of a published release until the corresponding tag and release workflow succeed.
+
+## [1.1.10] - 2026-09-04 — verification, reproducibility and release readiness
+
+### Added
+
+- Added repository-managed `v1.1.10` release notes.
+- Added a dedicated `v1.1.10` release branch for controlled release preparation.
+
+### Changed
+
+- Advanced the backend Maven project version to `1.1.10`.
+- Advanced the frontend npm package version to `1.1.10`.
+- Continued the committed frontend lockfile synchronization policy.
+- Advanced the release-manifest audit workflow default to `1.1.10` for manual release audits.
+- Continued the release-integrity and operational safeguards from the 1.1.x line.
+
+### Verification
+
+- The v1.1.10 release contract requires backend, frontend, and lockfile versions to agree.
+- Release documentation must identify the same release version.
+- Release-blocking CI, security validation, packaged behavior, browser/accessibility checks, artifact integrity, and checksum review remain publication gates.
+
+### Release status
+
+- `v1.1.10` is the active release target.
+- `v1.1.9` remains the immediately preceding implementation line until the release sequence is formally promoted.
+- Earlier published release history remains immutable.
 
 ## [1.1.9] - 2026-09-04 — release automation, testability and maintenance
 
