@@ -6,8 +6,36 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 ### Next
 
-- Future work belongs on the next planned release line after `1.1.10`.
+- Future work belongs on the next planned release line after `1.2.0`.
 - Do not treat unreleased source changes as part of a published release until the corresponding tag and release workflow succeed.
+
+## [1.2.0] - 2026-09-04 — platform maturity and operational contracts
+
+### Added
+
+- Added repository-managed `v1.2.0` release notes.
+- Added the 1.2.x API compatibility and versioning policy.
+- Added a reusable v1.2.0 release-contract checklist.
+- Added operator deployment and post-deployment smoke notes for the 1.2.x line.
+
+### Changed
+
+- Advanced the backend Maven project version to `1.2.0`.
+- Advanced the frontend npm package version to `1.2.0`.
+- Established explicit additive, contract-change, and breaking-change categories for the `/api` surface.
+- Formalized release verification expectations for security, accessibility, performance, recovery, artifacts, and tag integrity.
+
+### Security and operations
+
+- Preserved restricted Actuator exposure and database-aware readiness.
+- Preserved the requirement that sensitive credentials and member data stay out of logs and committed fixtures.
+- Preserved forward-only Flyway migration history and immutable published tags.
+
+### Release status
+
+- `v1.2.0` is the active minor-release preparation line.
+- Publication remains conditional on the complete release-blocking CI and tag-scoped validation gates.
+- Earlier published release history remains immutable.
 
 ## [1.1.10] - 2026-09-04 — verification, reproducibility and release readiness
 
