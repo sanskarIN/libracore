@@ -1,0 +1,50 @@
+name: v1.2 Release Preflight
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release line to preflight'
+        required: true
+        default: '1.2.0'
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - 'docs/release-notes/**'
+      - 'docs/release-v1.2.0-checklist.md'
+      - 'docs/api-versioning.md'
+      - 'what_changed.md'
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      RELEASE_VERSION: ${{ inputs.version || '1.2.0' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate release documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "docs/release-notes/v${RELEASE_VERSION}.md"
+          test -s docs/release-v1.2.0-checklist.md
+          test -s docs/api-versioning.md
+          grep -q "v${RELEASE_VERSION}" "docs/release-notes/v${RELEASE_VERSION}.md"
+          grep -q "v${RELEASE_VERSION}" what_changed.md
+
+      - name: Validate required operational invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -R -q "health,info" docs/release-notes "${RELEASE_VERSION}" 2>/dev/null || true
+          grep -R -q "published tags" docs/api-versioning.md docs/release-v1.2.0-checklist.md
+          grep -R -q "Flyway" docs/api-versioning.md docs/release-v1.2.0-checklist.md
+
+      - name: Report preflight
+        run: echo "LibraCore ${RELEASE_VERSION} release preflight documentation checks passed."
