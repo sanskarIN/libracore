@@ -2,6 +2,25 @@
 
 The roadmap describes direction, not a promise that an unchecked item already exists. `what_changed.md` is the implementation handoff and `CHANGELOG.md` records delivered behavior.
 
+## 1.1.6 — Performance and deployment validation
+
+- [x] Advance backend executable manifest to `1.1.6`.
+- [x] Advance frontend executable manifest to `1.1.6`.
+- [x] Add explicit Spring Boot liveness and readiness probes.
+- [x] Keep readiness tied to database health while preserving restricted Actuator exposure.
+- [x] Add representative performance measurement scenarios over the isolated PostgreSQL fixture.
+- [x] Define repeatable query latency acceptance thresholds.
+- [x] Add Performance Thresholds CI validation.
+- [x] Add release notes for `v1.1.6`.
+- [x] Record the release line in the changelog.
+- [ ] Confirm frontend lockfile is synchronized to `1.1.6`.
+- [ ] Run the complete release-blocking CI suite against the final source.
+- [ ] Verify packaged startup, liveness, readiness, and `/actuator/info` behavior.
+- [ ] Complete role-based browser smoke testing and accessibility evidence.
+- [ ] Review deployment configuration and tracked secrets.
+- [ ] Review artifact and checksum output.
+- [ ] Create and publish `v1.1.6` only from the exact verified commit.
+
 ## 1.1.5 — Operational observability and diagnostics
 
 - [x] Preserve the published `v1.1.4` history and all earlier release history.
@@ -12,22 +31,9 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 - [x] Explicitly disable environment and Git metadata exposure through actuator info.
 - [x] Advance backend and frontend executable manifests to `1.1.5`.
 - [x] Add repository-managed `v1.1.5` release notes.
-- [ ] Synchronize and verify the committed frontend lockfile at `1.1.5`.
-- [ ] Run the complete release-blocking CI suite against the final source.
-- [ ] Verify packaged `/actuator/info` contains the expected build version and does not expose environment metadata.
-- [ ] Complete role-based browser smoke testing and accessibility evidence.
-- [ ] Review repository configuration, tracked secrets, and release artifacts.
-- [ ] Tag and publish `v1.1.5` only after every release gate is closed.
-
-## 1.1.6 — Performance and deployment validation
-
-After `v1.1.5` release closure, the next maintenance increment will focus on turning the repeatable performance fixture baseline into actionable performance measurements and strengthening deployment/environment validation.
-
-- [ ] Add representative performance measurement scenarios using the existing safe PostgreSQL fixtures.
-- [ ] Define repeatable latency/throughput acceptance thresholds for selected backend operations.
-- [ ] Add deployment configuration validation for required runtime settings without exposing secret values.
-- [ ] Improve operational startup/readiness diagnostics while preserving safe actuator boundaries.
-- [ ] Document environment-specific validation and rollback evidence.
+- [x] Synchronize and verify the committed frontend lockfile at `1.1.5`.
+- [x] Complete release-blocking CI and tag-scoped publication.
+- [x] Publish stable `v1.1.5` as the latest release.
 
 ## Published 1.1.4 release line
 
