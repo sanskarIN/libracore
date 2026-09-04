@@ -1,0 +1,99 @@
+name: Performance Thresholds
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/performance-fixture.sql'
+      - 'scripts/load-performance-fixture.sh'
+      - 'scripts/check-performance-fixture.sh'
+      - 'scripts/check-performance-thresholds.sh'
+      - '.github/workflows/performance-thresholds.yml'
+  pull_request:
+    paths:
+      - 'scripts/performance-fixture.sql'
+      - 'scripts/load-performance-fixture.sh'
+      - 'scripts/check-performance-fixture.sh'
+      - 'scripts/check-performance-thresholds.sh'
+      - '.github/workflows/performance-thresholds.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: performance-thresholds-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: libracore_perf
+          POSTGRES_USER: libracore
+          POSTGRES_PASSWORD: test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U libracore -d libracore_perf"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PERF_DATABASE_URL: postgresql://libracore:test-password@localhost:5432/libracore_perf
+      PERF_FIXTURE_ALLOW_WRITE: 'YES'
+      PERF_BOOKS: '120'
+      PERF_MEMBERS: '100'
+      PERF_COPIES_PER_BOOK: '2'
+      PERF_LOANS: '80'
+      PERF_RESERVATIONS: '60'
+      PERF_MAX_QUERY_MS: '250'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends postgresql-client
+
+      - name: Apply current SQL migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r migration; do
+            echo "Applying ${migration}"
+            PGPASSWORD=test-password psql -X --no-psqlrc --set=ON_ERROR_STOP=1 \
+              --dbname="$PERF_DATABASE_URL" --file="$migration"
+          done < <(find backend/src/main/resources/db/migration -maxdepth 1 -type f -name 'V*.sql' | sort -V)
+
+          PGPASSWORD=test-password psql -X --no-psqlrc --set=ON_ERROR_STOP=1 --dbname="$PERF_DATABASE_URL" <<'SQL'
+          CREATE TABLE flyway_schema_history (
+              installed_rank INTEGER PRIMARY KEY,
+              success BOOLEAN NOT NULL
+          );
+          INSERT INTO flyway_schema_history (installed_rank, success) VALUES (1, TRUE);
+          SQL
+
+      - name: Check fixture scripts
+        run: |
+          bash -n scripts/load-performance-fixture.sh
+          bash -n scripts/check-performance-fixture.sh
+          bash -n scripts/check-performance-thresholds.sh
+
+      - name: Load fixture
+        run: bash scripts/load-performance-fixture.sh
+
+      - name: Verify fixture invariants
+        run: bash scripts/check-performance-fixture.sh
+
+      - name: Measure representative query latency
+        run: bash scripts/check-performance-thresholds.sh
