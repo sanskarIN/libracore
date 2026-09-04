@@ -2,19 +2,19 @@
 
 **Audit/update date:** 2026-09-04  
 **Repository:** `sanskarIN/libracore`  
-**Branch:** `release/v1.1.10`  
+**Branch:** `main`  
 **Active release target:** `v1.1.10`  
 **Immediate preceding implementation line:** `v1.1.9`  
-**Previous published stable release:** `v1.1.7`  
+**Previous confirmed published stable release:** `v1.1.7`  
 **Commit identity:** `Sanskar <sanskarin@outlook.in>`
 
 This is the canonical continuation record for LibraCore. Published release history must not be rewritten or force-moved. The historical v1.1.3 workflow failure remains audit history.
 
 ## v1.1.10 implementation
 
-The v1.1.10 release-preparation branch was created from the current `main` line and now contains the release version and documentation work required to begin final verification.
+The v1.1.10 release-preparation work has been merged into `main` through PR #25. The frontend lockfile synchronization automation subsequently aligned the committed lockfile metadata to `1.1.10`.
 
-Completed preparation commits:
+Completed preparation commits include:
 
 - `chore(release): start v1.1.10 backend version line`
 - `chore(release): start v1.1.10 frontend version line`
@@ -22,6 +22,9 @@ Completed preparation commits:
 - `docs(release): add v1.1.10 release notes`
 - `docs(changelog): open v1.1.10 release line`
 - `docs(roadmap): add v1.1.10 verification release line`
+- `docs(handoff): prepare v1.1.10 release engineering`
+- merge of PR #25: `release: prepare v1.1.10`
+- `chore(release): synchronize frontend lockfile`
 
 All release commits use `Sanskar <sanskarin@outlook.in>`.
 
@@ -33,8 +36,10 @@ v1.1.10 is focused on verification, reproducibility, release-readiness automatio
 
 - `backend/pom.xml` → `1.1.10`;
 - `frontend/package.json` → `1.1.10`;
-- `frontend/package-lock.json` → must be synchronized to `1.1.10` by the repository lockfile workflow before publication;
+- `frontend/package-lock.json` → `1.1.10` at the root and workspace package entry;
 - `.github/workflows/release-manifest-audit.yml` → manual-audit default `1.1.10`.
+
+The lockfile was synchronized by the repository automation rather than by hand. The current main-branch lockfile root and package entry both report `1.1.10`.
 
 ## Operational invariants
 
@@ -51,7 +56,7 @@ The existing production-safety model remains in force:
 
 ## v1.1.10 release gates
 
-1. synchronize frontend lockfile to `1.1.10`;
+1. verify frontend lockfile is synchronized to `1.1.10`;
 2. pass the release-manifest audit for `1.1.10`;
 3. pass repository version guards;
 4. pass Backend CI and Frontend CI;
@@ -70,7 +75,7 @@ The existing production-safety model remains in force:
 
 ## Important release-order constraint
 
-The repository currently has a release-preparation sequence in progress. `v1.1.8` was preserved as an exact release candidate and `v1.1.9` is the preceding implementation line, while `v1.1.7` is the last confirmed published stable release. Do not claim `v1.1.8`, `v1.1.9`, or `v1.1.10` as published until GitHub shows the corresponding release/tag and its required tag-scoped validation has succeeded.
+`v1.1.8` remains preserved as an exact release candidate and `v1.1.9` remains the preceding implementation line. `v1.1.7` is the last release whose stable publication is confirmed in the project handoff. Do not claim `v1.1.8`, `v1.1.9`, or `v1.1.10` as published until GitHub shows the corresponding release/tag and its required tag-scoped validation has succeeded.
 
 ## Release sequence
 
