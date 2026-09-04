@@ -2,6 +2,23 @@
 
 The roadmap describes direction, not a promise that an unchecked item already exists. `what_changed.md` is the implementation handoff and `CHANGELOG.md` records delivered behavior.
 
+## 1.1.7 — Reliability and release hardening
+
+- [x] Advance backend executable manifest to `1.1.7`.
+- [x] Advance frontend executable manifest to `1.1.7`.
+- [x] Add repository-managed `v1.1.7` release notes.
+- [x] Record the release line in the changelog.
+- [x] Carry forward database-aware readiness and safe Actuator boundaries from `1.1.6`.
+- [x] Define release-integrity validation requirements.
+- [ ] Confirm frontend lockfile is synchronized to `1.1.7`.
+- [ ] Run the complete release-blocking CI suite against the final source.
+- [ ] Complete CodeQL and dependency/security validation.
+- [ ] Verify packaged startup, liveness, readiness, and `/actuator/info` behavior.
+- [ ] Complete role-based browser smoke journeys and accessibility evidence.
+- [ ] Review deployment configuration and tracked secrets.
+- [ ] Review artifact and checksum output.
+- [ ] Create and publish `v1.1.7` only from the exact verified commit.
+
 ## 1.1.6 — Performance and deployment validation
 
 - [x] Advance backend executable manifest to `1.1.6`.
@@ -11,57 +28,27 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 - [x] Add representative performance measurement scenarios over the isolated PostgreSQL fixture.
 - [x] Define repeatable query latency acceptance thresholds.
 - [x] Add Performance Thresholds CI validation.
-- [x] Add release notes for `v1.1.6`.
-- [x] Record the release line in the changelog.
-- [ ] Confirm frontend lockfile is synchronized to `1.1.6`.
-- [ ] Run the complete release-blocking CI suite against the final source.
-- [ ] Verify packaged startup, liveness, readiness, and `/actuator/info` behavior.
-- [ ] Complete role-based browser smoke testing and accessibility evidence.
-- [ ] Review deployment configuration and tracked secrets.
-- [ ] Review artifact and checksum output.
-- [ ] Create and publish `v1.1.6` only from the exact verified commit.
+- [x] Synchronize frontend lockfile to `1.1.6`.
+- [x] Complete release-blocking CI and tag-scoped publication.
+- [x] Verify packaged startup/readiness/build-info behavior.
+- [x] Publish stable `v1.1.6`.
 
 ## 1.1.5 — Operational observability and diagnostics
 
-- [x] Preserve the published `v1.1.4` history and all earlier release history.
+- [x] Preserve the published `v1.1.4` history and earlier release history.
 - [x] Add Spring Boot build metadata to packaged backend artifacts.
-- [x] Enable non-sensitive build information through the existing `/actuator/info` endpoint.
+- [x] Enable non-sensitive build information through `/actuator/info`.
 - [x] Keep actuator exposure limited to `health,info`.
 - [x] Keep health details hidden.
-- [x] Explicitly disable environment and Git metadata exposure through actuator info.
-- [x] Advance backend and frontend executable manifests to `1.1.5`.
-- [x] Add repository-managed `v1.1.5` release notes.
-- [x] Synchronize and verify the committed frontend lockfile at `1.1.5`.
-- [x] Complete release-blocking CI and tag-scoped publication.
-- [x] Publish stable `v1.1.5` as the latest release.
+- [x] Disable environment and Git metadata exposure.
+- [x] Advance backend and frontend manifests to `1.1.5`.
+- [x] Synchronize and verify the frontend lockfile.
+- [x] Complete release-blocking CI and publication.
+- [x] Publish stable `v1.1.5` as latest.
 
-## Published 1.1.4 release line
+## Published history
 
-The repository's `v1.1.4` release is published and remains immutable. The attempted `v1.1.3` release workflow failure is retained for auditability and must not be rewritten.
-
-## Historical 1.1.3 release line
-
-The repository prepared and tagged `v1.1.3`, but its release workflow failed during packaged backend health verification. The source, tag, and failed workflow evidence remain intact.
-
-## Historical 1.1.2 release line
-
-The repository's `v1.1.2` release is published and remains immutable.
-
-## Historical 1.1.1 release line
-
-The repository's `v1.1.1` release is published and remains immutable.
-
-## Historical 1.1.0 release line
-
-The repository's `v1.1.0` release preparation and publication history are retained for auditability. Its tag is historical and must not be rewritten.
-
-## Historical 2.0.12 engineering line
-
-The repository previously used `2.0.12` as a release-candidate engineering line. Its implementation work is retained in Git history and changelog documentation, but it is no longer an active release target.
-
-## Historical 0.1.1 rebaseline attempt
-
-A temporary `0.1.1` release-rebaseline pass was superseded after confirming the intended post-`v1.0.0` release sequence. Those preparation commits remain in Git history as auditable work and are not a published `v0.1.1` release.
+The `v1.1.6` and `v1.1.5` releases are published stable releases and must remain immutable. The historical `v1.1.3` workflow failure is retained for auditability and must not be rewritten.
 
 ## Future
 
