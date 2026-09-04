@@ -5,7 +5,7 @@
 **Branch:** `main`  
 **Active release target:** `v1.2.0`  
 **Immediate preceding implementation line:** `v1.1.10`  
-**Previous confirmed published stable release:** `v1.1.7`  
+**Previous confirmed published stable release:** `v1.1.10`  
 **Commit identity:** `Sanskar <sanskarin@outlook.in>`
 
 This is the canonical continuation record for LibraCore. Published release history must not be rewritten or force-moved. The historical v1.1.3 workflow failure remains audit history.
@@ -14,25 +14,7 @@ This is the canonical continuation record for LibraCore. Published release histo
 
 The v1.2.0 preparation line is open on `main`. The backend, frontend, lockfile, release documentation, API compatibility policy, release checklist, operator notes, CI guards, and artifact-verification guidance have been prepared.
 
-Completed v1.2.0 preparation commits include:
-
-- `chore(release): start v1.2.0 backend version line`
-- `chore(release): start v1.2.0 frontend version line`
-- `docs(release): add v1.2.0 release notes`
-- `docs(api): establish 1.2.x compatibility policy`
-- `docs(release): add reusable v1.2.0 release contract checklist`
-- `docs(ops): add v1.2.0 operator deployment notes`
-- `docs(changelog): open v1.2.0 release line`
-- `docs(roadmap): open v1.2.0 platform maturity line`
-- `ci(release): advance manifest audit default to v1.2.0`
-- `ci(api): add 1.2.x API contract policy guard`
-- `ci(release): add v1.2.0 preflight workflow`
-- `fix(ci): harden v1.2.0 preflight invariant checks`
-- `docs(release): add artifact provenance verification guide`
-- `docs(roadmap): record v1.2.0 lockfile and CI preparation`
-- `docs(handoff): establish v1.2.0 engineering checkpoint`
-
-The frontend lockfile now reports `1.2.0` at both the lockfile root and workspace package entry.
+Additional v1.2.0 continuation work has now fixed the preflight documentation invariant: the API policy explicitly documents the Flyway migration policy, and the release checklist explicitly tracks API contract validation.
 
 ## v1.2.0 scope
 
@@ -55,6 +37,7 @@ v1.2.0 establishes a contract-driven platform baseline: explicit API compatibili
 - liveness: application liveness state;
 - readiness: readiness state plus database health;
 - performance fixture writes: explicitly gated and isolated from production databases;
+- Flyway released migrations: immutable and forward-only;
 - published tags: never force-moved or rewritten.
 
 ## v1.2.0 release gates
@@ -76,6 +59,10 @@ v1.2.0 establishes a contract-driven platform baseline: explicit API compatibili
 15. create `v1.2.0` only from that exact commit;
 16. confirm tag-scoped validation succeeds;
 17. publish `v1.2.0` as stable/latest.
+
+## Preflight correction
+
+The first v1.2.0 preflight run failed because its operational-invariant assertion required the term `Flyway` in the API policy/checklist while the policy only described migrations generically. This was a documentation-contract mismatch, not an application failure. The API versioning policy and release checklist have now been corrected so the preflight assertion is satisfied by explicit migration-policy documentation.
 
 ## Current publication status
 
