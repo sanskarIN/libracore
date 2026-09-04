@@ -70,4 +70,4 @@ This checklist is the release contract for LibraCore v1.2.0 and can be reused fo
 - [ ] Previous validated artifact is identified.
 - [ ] Database backup/restore procedure is available.
 - [ ] Operators understand that released Flyway migrations must not be edited.
-- [ ] Published tags will not be force-moved.
+- [ ] published tags will not be force-moved.
