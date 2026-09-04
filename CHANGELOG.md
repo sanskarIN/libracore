@@ -6,8 +6,34 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 ### Next
 
-- Future work belongs on the next planned release line after `1.1.8`.
+- Future work belongs on the next planned release line after `1.1.9`.
 - Do not treat unreleased source changes as part of a published release until the corresponding tag and release workflow succeed.
+
+## [1.1.9] - 2026-09-04 — release automation, testability and maintenance
+
+### Added
+
+- Added repository-managed `v1.1.9` release notes.
+- Added a dedicated roadmap line for release automation, reproducibility, diagnostics, and maintenance.
+
+### Changed
+
+- Advanced the backend Maven project version to `1.1.9`.
+- Advanced the frontend npm package version to `1.1.9`.
+- Continued the committed frontend lockfile synchronization policy.
+- Continued the release-integrity and operational safeguards from `v1.1.8`.
+
+### Verification
+
+- The v1.1.9 release contract requires backend, frontend, and lockfile versions to agree.
+- Release documentation must identify the same release version.
+- Release-blocking CI, security validation, packaged behavior, browser/accessibility checks, artifact integrity, and checksum review remain publication gates.
+
+### Release status
+
+- `v1.1.9` is the active release target.
+- `v1.1.8` remains the immediately preceding release line until it is published stable.
+- Earlier published release history remains immutable.
 
 ## [1.1.8] - 2026-09-04 — release integrity and developer experience
 
@@ -25,7 +51,7 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 ### Verification
 
-- Release-manifest validation now checks backend, frontend, and lockfile root versions as a single release contract.
+- Release-manifest validation checks backend, frontend, and lockfile root versions as a single release contract.
 - Repository-managed release notes are checked before release promotion.
 - Complete release-blocking CI, packaged behavior, security validation, browser/accessibility checks, artifact integrity, and checksum review remain publication gates.
 
