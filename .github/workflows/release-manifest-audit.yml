@@ -48,35 +48,34 @@ jobs:
         run: |
           python - <<'PY'
           import json
-          import re
           import sys
           from pathlib import Path
           import xml.etree.ElementTree as ET
 
           version = __import__('os').environ['RELEASE_VERSION']
-
           pom = Path('backend/pom.xml')
           package_json = Path('frontend/package.json')
           lockfile = Path('frontend/package-lock.json')
           release_notes = Path(f'docs/release-notes/v{version}.md')
 
-          if not all(p.exists() for p in [pom, package_json, lockfile, release_notes]):
-              missing = [str(p) for p in [pom, package_json, lockfile, release_notes] if not p.exists()]
+          required = [pom, package_json, lockfile, release_notes]
+          missing = [str(p) for p in required if not p.exists()]
+          if missing:
               print('Missing required release files:', ', '.join(missing))
               sys.exit(1)
 
           ns = {'m': 'http://maven.apache.org/POM/4.0.0'}
-          root = ET.parse(pom).getroot()
+          try:
+              root = ET.parse(pom).getroot()
+          except ET.ParseError as exc:
+              print(f'Invalid backend/pom.xml: {exc}')
+              sys.exit(1)
+
           backend_version = root.findtext('m:version', namespaces=ns)
           frontend_version = json.loads(package_json.read_text())['version']
           lock = json.loads(lockfile.read_text())
           lock_version = lock['packages']['']['version']
-
-          values = {
-              'backend': backend_version,
-              'frontend': frontend_version,
-              'lockfile': lock_version,
-          }
+          values = {'backend': backend_version, 'frontend': frontend_version, 'lockfile': lock_version}
           print(values)
 
           if any(value != version for value in values.values()):
@@ -87,7 +86,6 @@ jobs:
           roadmap = Path('ROADMAP.md').read_text()
           notes = release_notes.read_text()
 
-          required_markers = [f'[{version}]', f'`{version}`', f'v{version}']
           if f'[{version}]' not in changelog:
               print('CHANGELOG.md does not contain the requested release heading')
               sys.exit(1)
