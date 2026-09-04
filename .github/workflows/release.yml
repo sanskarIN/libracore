@@ -81,6 +81,28 @@ jobs:
       - name: Verify packaged backend health
         run: curl --fail --silent --show-error --retry 60 --retry-all-errors --retry-delay 2 --retry-max-time 180 http://localhost:8080/actuator/health
 
+      - name: Verify packaged backend readiness
+        run: curl --fail --silent --show-error --retry 60 --retry-all-errors --retry-delay 2 --retry-max-time 180 http://localhost:8080/actuator/health/readiness
+
+      - name: Verify packaged build metadata and safe actuator info
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 30 --retry-all-errors --retry-delay 2 --retry-max-time 90 \
+            http://localhost:8080/actuator/info > /tmp/libracore-release-info.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('/tmp/libracore-release-info.json').read_text())
+          build = payload.get('build', {})
+          if build.get('version') != '1.1.6':
+              raise SystemExit(f"Unexpected build version: {build.get('version')!r}")
+          if 'env' in payload or 'git' in payload:
+              raise SystemExit('Actuator info exposed disabled environment or Git metadata.')
+          print('Packaged build metadata and safe Actuator info verified for 1.1.6.')
+          PY
+
       - name: Install frontend dependencies reproducibly
         working-directory: frontend
         run: npm ci --ignore-scripts --no-audit --no-fund
