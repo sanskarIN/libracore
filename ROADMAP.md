@@ -8,7 +8,7 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 - [x] Advance frontend executable manifest to `1.1.8`.
 - [x] Add repository-managed `v1.1.8` release notes.
 - [x] Add a release-manifest audit workflow.
-- [ ] Synchronize and verify the frontend lockfile to `1.1.8`.
+- [x] Synchronize and verify the frontend lockfile to `1.1.8`.
 - [ ] Run the complete release-blocking CI suite against the final source.
 - [ ] Complete CodeQL and dependency/security validation.
 - [ ] Verify packaged startup, liveness, readiness, and `/actuator/info` behavior.
@@ -16,6 +16,20 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 - [ ] Review deployment configuration and tracked secrets.
 - [ ] Review artifact and checksum output.
 - [ ] Create and publish `v1.1.8` only from the exact verified commit.
+
+## 1.1.9 — Release automation, testability, and maintenance
+
+- [ ] Advance backend executable manifest to `1.1.9`.
+- [ ] Advance frontend executable manifest to `1.1.9`.
+- [ ] Synchronize and verify the frontend lockfile to `1.1.9`.
+- [ ] Add repository-managed `v1.1.9` release notes.
+- [ ] Add a deterministic release-readiness audit for version, documentation, and release metadata.
+- [ ] Strengthen CI failure diagnostics without weakening release gates.
+- [ ] Verify backend/frontend test commands remain reproducible on supported toolchain versions.
+- [ ] Review dependency drift and security advisories.
+- [ ] Review deployment and rollback documentation for 1.1.x consistency.
+- [ ] Complete release-blocking CI and tag-scoped validation.
+- [ ] Create and publish stable `v1.1.9` only after all gates pass.
 
 ## 1.1.7 — Reliability and release hardening
 
@@ -48,20 +62,3 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 - [x] Add Spring Boot build metadata to packaged backend artifacts.
 - [x] Enable non-sensitive build information through `/actuator/info`.
 - [x] Keep actuator exposure limited to `health,info`.
-- [x] Keep health details hidden.
-- [x] Disable environment and Git metadata exposure.
-- [x] Advance backend and frontend manifests to `1.1.5`.
-- [x] Synchronize and verify the frontend lockfile.
-- [x] Complete release-blocking CI and publication.
-- [x] Publish stable `v1.1.5` as latest.
-
-## Published history
-
-The `v1.1.7` and `v1.1.6` releases are published stable releases and must remain immutable. The historical `v1.1.3` workflow failure is retained for auditability and must not be rewritten.
-
-## Future
-
-- Additional library integrations and interoperability.
-- Expanded analytics and reporting.
-- Further accessibility and internationalization improvements.
-- Optional service decomposition only when operational boundaries justify it.
