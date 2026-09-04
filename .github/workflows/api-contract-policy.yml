@@ -1,0 +1,49 @@
+name: API Contract Policy
+
+on:
+  pull_request:
+    paths:
+      - 'backend/src/**'
+      - 'backend/src/test/**'
+      - 'docs/api-versioning.md'
+      - 'docs/api.md'
+      - 'CHANGELOG.md'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/src/**'
+      - 'backend/src/test/**'
+      - 'docs/api-versioning.md'
+      - 'docs/api.md'
+      - 'CHANGELOG.md'
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Validate API policy documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/api-versioning.md
+          grep -q "Additive" docs/api-versioning.md
+          grep -q "Breaking" docs/api-versioning.md
+          grep -q "Authorization" docs/api-versioning.md
+          grep -q "pagination" docs/api-versioning.md
+          grep -q "API Contract" CHANGELOG.md || grep -q "api" CHANGELOG.md
+
+      - name: Validate API documentation exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/api.md
+
+      - name: Report policy result
+        run: echo "LibraCore API contract policy checks passed."
