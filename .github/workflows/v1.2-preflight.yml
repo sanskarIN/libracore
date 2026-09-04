@@ -42,7 +42,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -R -q "health,info" docs/release-notes "${RELEASE_VERSION}" 2>/dev/null || true
+          grep -R -q "Actuator" "docs/release-notes/v${RELEASE_VERSION}.md"
           grep -R -q "published tags" docs/api-versioning.md docs/release-v1.2.0-checklist.md
           grep -R -q "Flyway" docs/api-versioning.md docs/release-v1.2.0-checklist.md
 
