@@ -6,8 +6,34 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 ### Next
 
-- Future work belongs on the next planned release line after `1.1.7`.
+- Future work belongs on the next planned release line after `1.1.8`.
 - Do not treat unreleased source changes as part of a published release until the corresponding tag and release workflow succeed.
+
+## [1.1.8] - 2026-09-04 — release integrity and developer experience
+
+### Added
+
+- Added repository-managed `v1.1.8` release notes.
+- Added a release-manifest audit workflow for synchronized versions and release documentation.
+
+### Changed
+
+- Advanced the backend Maven project version to `1.1.8`.
+- Advanced the frontend npm package version to `1.1.8`.
+- Synchronized the committed frontend lockfile to `1.1.8`.
+- Continued the v1.1.7 liveness, database-aware readiness, performance-fixture isolation, and safe Actuator model.
+
+### Verification
+
+- Release-manifest validation now checks backend, frontend, and lockfile root versions as a single release contract.
+- Repository-managed release notes are checked before release promotion.
+- Complete release-blocking CI, packaged behavior, security validation, browser/accessibility checks, artifact integrity, and checksum review remain publication gates.
+
+### Release status
+
+- `v1.1.8` is the active release target.
+- `v1.1.7` is the previous published stable reliability and release-hardening release.
+- Earlier published release history remains immutable.
 
 ## [1.1.7] - 2026-09-04 — reliability and release hardening
 
@@ -41,7 +67,7 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 ### Release status
 
-- `v1.1.7` is the active release target.
+- `v1.1.7` is a published stable release.
 - `v1.1.6` is the previous published stable performance/deployment validation release.
 - Earlier published release history remains immutable.
 
