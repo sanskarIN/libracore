@@ -1,7 +1,7 @@
 {
   "name": "libracore-web",
   "private": true,
-  "version": "1.1.9",
+  "version": "1.1.10",
   "description": "LibraCore responsive library management web application with release-integrity validation",
   "repository": {
     "type": "git",
