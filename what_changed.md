@@ -26,6 +26,9 @@ Focused commits for the performance and deployment-validation line:
 - `docs(release): add v1.1.6 performance and deployment notes`
 - `docs(changelog): record v1.1.6 performance and deployment work`
 - `docs(roadmap): move performance validation into 1.1.6`
+- `docs(frontend): clarify deployment-ready diagnostics metadata`
+- `ci(release): verify v1.1.6 readiness and safe build metadata`
+- `ci(version): validate synchronized manifests from engineering handoff changes`
 
 All listed commits use `Sanskar <sanskarin@outlook.in>`.
 
@@ -58,33 +61,32 @@ The readiness configuration is intentionally database-aware so an unavailable da
 
 - `backend/pom.xml` → `1.1.6`;
 - `frontend/package.json` → `1.1.6`;
-- `frontend/package-lock.json` → must be synchronized to `1.1.6` by the repository's supported lockfile automation before publication.
+- `frontend/package-lock.json` → synchronized to `1.1.6` by the repository's lockfile automation.
 
 `scripts/check-version.mjs` remains the executable guard for all three version-bearing manifests.
 
 ## v1.1.6 remaining release gates
 
-1. confirm frontend lockfile root and package-root metadata are `1.1.6`;
-2. run `node scripts/check-version.mjs 1.1.6`;
-3. pass Backend CI;
-4. pass Frontend CI;
-5. pass Version Sync;
-6. pass CodeQL;
-7. pass Dependency Review/security checks;
-8. pass Recovery Drill;
-9. pass Performance Fixture CI;
-10. pass Performance Thresholds CI;
-11. verify packaged `/actuator/info` contains build metadata for `1.1.6`;
-12. verify liveness and readiness behavior;
-13. verify readiness reflects database availability;
-14. complete role-based browser smoke journeys;
-15. complete accessibility review;
-16. review deployment configuration and tracked secrets;
-17. identify the exact final verified commit;
-18. create `v1.1.6` only from that exact commit;
-19. confirm the tag-scoped release workflow succeeds;
-20. review generated release artifacts and SHA-256 checksums;
-21. confirm the GitHub release is published as stable/latest.
+1. run `node scripts/check-version.mjs 1.1.6`;
+2. pass Backend CI;
+3. pass Frontend CI;
+4. pass Version Sync;
+5. pass CodeQL;
+6. pass Dependency Review/security checks;
+7. pass Recovery Drill;
+8. pass Performance Fixture CI;
+9. pass Performance Thresholds CI;
+10. verify packaged `/actuator/info` contains build metadata for `1.1.6`;
+11. verify liveness and readiness behavior;
+12. verify readiness reflects database availability;
+13. complete role-based browser smoke journeys;
+14. complete accessibility review;
+15. review deployment configuration and tracked secrets;
+16. identify the exact final verified commit;
+17. create `v1.1.6` only from that exact commit;
+18. confirm the tag-scoped release workflow succeeds;
+19. review generated release artifacts and SHA-256 checksums;
+20. confirm the GitHub release is published as stable/latest.
 
 ## Release sequence
 
