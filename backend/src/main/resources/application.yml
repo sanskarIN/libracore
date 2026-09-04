@@ -29,7 +29,7 @@ spring:
     password: ${MAIL_PASSWORD:}
     properties:
       mail.smtp.auth: ${MAIL_SMTP_AUTH:false}
-      mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:false}
+      mail.smtp.starttls.enable: ${MAIL_STARTTLS:false}
       mail.smtp.connectiontimeout: 5000
       mail.smtp.timeout: 10000
       mail.smtp.writetimeout: 10000
@@ -44,7 +44,6 @@ management:
       show-details: never
       probes:
         enabled: true
-    health:
       group:
         liveness:
           include: livenessState
