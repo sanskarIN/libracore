@@ -6,19 +6,22 @@ The roadmap describes direction, not a promise that an unchecked item already ex
 
 - [x] Advance backend executable manifest to `1.2.0`.
 - [x] Advance frontend executable manifest to `1.2.0`.
+- [x] Synchronize frontend lockfile to `1.2.0` at the root and workspace package entry.
 - [x] Add repository-managed `v1.2.0` release notes.
 - [x] Establish an explicit API compatibility/versioning policy for `/api`.
 - [x] Add a reusable v1.2.0 release-contract checklist.
 - [x] Add operator deployment and post-deployment smoke guidance.
+- [x] Add API contract policy CI validation.
+- [x] Add v1.2.0 release preflight CI validation.
+- [x] Add artifact provenance and checksum verification guidance.
 - [x] Record the 1.2.0 release sequence and publication gates.
-- [ ] Synchronize and verify the frontend lockfile to `1.2.0`.
 - [ ] Run the complete release-blocking CI suite against the final source.
 - [ ] Complete repository version-guard validation.
 - [ ] Complete CodeQL and dependency/security validation.
 - [ ] Verify packaged startup, liveness, readiness, and `/actuator/info` behavior.
 - [ ] Complete browser smoke journeys and accessibility evidence.
 - [ ] Review deployment configuration and tracked secrets.
-- [ ] Review artifact and SHA-256 checksum output.
+- [ ] Review artifact and SHA-256 checksum output for the final build.
 - [ ] Identify the exact final verified commit.
 - [ ] Create `v1.2.0` only from the exact verified commit.
 - [ ] Confirm tag-scoped validation succeeds.
