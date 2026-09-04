@@ -2,6 +2,28 @@
 
 The roadmap describes direction, not a promise that an unchecked item already exists. `what_changed.md` is the implementation handoff and `CHANGELOG.md` records delivered behavior.
 
+## 1.2.0 — Platform maturity and operational contracts
+
+- [x] Advance backend executable manifest to `1.2.0`.
+- [x] Advance frontend executable manifest to `1.2.0`.
+- [x] Add repository-managed `v1.2.0` release notes.
+- [x] Establish an explicit API compatibility/versioning policy for `/api`.
+- [x] Add a reusable v1.2.0 release-contract checklist.
+- [x] Add operator deployment and post-deployment smoke guidance.
+- [x] Record the 1.2.0 release sequence and publication gates.
+- [ ] Synchronize and verify the frontend lockfile to `1.2.0`.
+- [ ] Run the complete release-blocking CI suite against the final source.
+- [ ] Complete repository version-guard validation.
+- [ ] Complete CodeQL and dependency/security validation.
+- [ ] Verify packaged startup, liveness, readiness, and `/actuator/info` behavior.
+- [ ] Complete browser smoke journeys and accessibility evidence.
+- [ ] Review deployment configuration and tracked secrets.
+- [ ] Review artifact and SHA-256 checksum output.
+- [ ] Identify the exact final verified commit.
+- [ ] Create `v1.2.0` only from the exact verified commit.
+- [ ] Confirm tag-scoped validation succeeds.
+- [ ] Publish stable/latest `v1.2.0`.
+
 ## 1.1.10 — Verification, reproducibility, and release readiness
 
 - [x] Advance backend executable manifest to `1.1.10`.
