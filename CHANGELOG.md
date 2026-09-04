@@ -6,8 +6,44 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 
 ### Next
 
-- Future work belongs on the next planned release line after `1.1.6`.
+- Future work belongs on the next planned release line after `1.1.7`.
 - Do not treat unreleased source changes as part of a published release until the corresponding tag and release workflow succeed.
+
+## [1.1.7] - 2026-09-04 — reliability and release hardening
+
+### Added
+
+- Added repository-managed `v1.1.7` release notes.
+- Added an explicit release-integrity validation focus covering synchronized manifests, packaged behavior, artifact integrity, and rollback evidence.
+
+### Changed
+
+- Advanced the backend Maven project version to `1.1.7`.
+- Advanced the frontend npm package version to `1.1.7`.
+- Continued the committed frontend lockfile synchronization policy.
+- Continued the v1.1.6 liveness, database-aware readiness, performance-fixture isolation, and safe Actuator model.
+
+### Security and operations
+
+- Actuator exposure remains limited to `health` and `info`.
+- Health details remain hidden.
+- Environment and Git metadata remain disabled.
+- Performance-fixture writes remain explicitly gated and isolated from production databases.
+- Release validation must review tracked secrets before publication.
+
+### Verification
+
+- Backend, frontend, and lockfile versions must resolve to `1.1.7`.
+- Release-blocking CI must pass before publication.
+- Packaged startup, health, readiness, and build metadata must be verified.
+- Artifact and SHA-256 checksum verification remain publication gates.
+- The final tag must point to the exact verified commit.
+
+### Release status
+
+- `v1.1.7` is the active release target.
+- `v1.1.6` is the previous published stable performance/deployment validation release.
+- Earlier published release history remains immutable.
 
 ## [1.1.6] - 2026-09-04 — performance and deployment validation
 
@@ -33,60 +69,44 @@ All notable LibraCore changes are recorded here. The project follows Keep a Chan
 - Advanced the frontend npm package version to `1.1.6`.
 - Continued the committed frontend lockfile synchronization policy.
 
-### Verification
-
-- Version Sync must confirm backend, frontend, and lockfile root metadata are aligned to `1.1.6`.
-- Performance Fixture CI must pass before release publication.
-- Performance Thresholds CI must pass its representative query latency thresholds.
-- Packaged startup/readiness behavior must be verified in the release workflow.
-- Artifact and checksum verification remain publication gates.
-
 ### Release status
 
-- `v1.1.6` is the active release target.
-- `v1.1.5` is the published stable observability release.
-- The attempted `v1.1.3` workflow failure remains immutable audit history.
+- `v1.1.6` is published as a stable release.
+- `v1.1.5` is the previous stable observability release.
 
 ## [1.1.5] - 2026-09-04 — operational observability and diagnostics
 
 ### Added
 
 - Added Spring Boot build-info generation to packaged backend artifacts.
-- Enabled the existing `/actuator/info` endpoint to report non-sensitive build metadata for deployment identification.
+- Enabled the existing `/actuator/info` endpoint to report non-sensitive build metadata.
 
 ### Security and operations
 
 - Kept actuator web exposure limited to `health` and `info`.
 - Kept health details hidden with `show-details: never`.
-- Explicitly disabled environment and Git metadata contributors so `/actuator/info` does not expose environment values, credentials, datasource configuration, or repository metadata.
+- Explicitly disabled environment and Git metadata contributors.
 
 ### Changed
 
 - Advanced the backend Maven project version to `1.1.5`.
 - Advanced the frontend npm package version to `1.1.5`.
 - Continued the committed frontend lockfile synchronization policy.
-- Added repository-managed `v1.1.5` release notes.
 
 ### Release status
 
 - `v1.1.5` is published as a stable release.
 - `v1.1.4` was the previous published stable maintenance release.
-- The attempted `v1.1.3` workflow failure remains immutable audit history.
 
 ## [1.1.4] - 2026-09-04 — published maintenance and performance reliability release
 
 ### Changed
 
 - Advanced the backend Maven project version to `1.1.4`.
-- Advanced the frontend npm package version to `1.1.4`.
-- Added a deterministic release-notes path based on the release tag.
-- Extended the packaged-backend health retry window after the v1.1.3 release attempt exposed a startup-readiness timing failure.
-- Added automatic frontend lockfile synchronization when the package manifest changes on `main`.
-- Added repository and issue metadata to the frontend package manifest.
-- Added repeatable PostgreSQL performance fixtures with explicit write and database-name safety gates.
-- Added CI verification for fixture syntax, migration loading, invariant checks, and repeatability.
+- Preserved the established release verification and performance reliability gates.
 
-### Release status
+## Historical release notes
 
-- `v1.1.4` is published as a stable release.
-- The `v1.1.3` tagged release workflow failure is retained as diagnostic history; existing tags and published releases must not be rewritten.
+- `v1.1.3` remains immutable historical audit history because its tag-scoped workflow failed during packaged backend health verification.
+- `v1.1.2` is a published stable release.
+- `v1.1.1` is a published stable release.
