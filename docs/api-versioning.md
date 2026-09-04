@@ -35,6 +35,10 @@ A breaking change removes or renames a required field/endpoint, changes an exist
 9. Preserve correlation identifiers where the existing error/audit contract provides them.
 10. Validate authentication and authorization behavior for both permitted and denied roles.
 
+## Database migration policy
+
+LibraCore uses Flyway-managed database migrations. Released migrations are immutable: a migration that has already shipped must never be edited or repurposed. Schema changes require a new forward migration, and release validation should exercise migration startup against a disposable or isolated database before production deployment.
+
 ## Deprecation
 
 A deprecated API should remain functional for a documented transition period whenever practical. Deprecation must be visible in release documentation and accompanied by a replacement path. Removal requires an explicit release decision rather than an incidental refactor.
@@ -54,5 +58,6 @@ Clients should ignore unknown response fields, use documented machine-readable e
 - [ ] Contract tests added or updated.
 - [ ] Authorization tests cover allowed and denied roles.
 - [ ] Persistence/migration impact reviewed.
+- [ ] Flyway migration policy reviewed.
 - [ ] Release notes and changelog updated.
 - [ ] Security and privacy impact reviewed.
