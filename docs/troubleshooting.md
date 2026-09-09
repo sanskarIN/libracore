@@ -34,6 +34,19 @@ Then check `http://localhost:8080/actuator/health`. A port conflict, database fa
 - Clear browser `sessionStorage` if an old/corrupted session is suspected.
 - Inspect sanitized server logs without exposing credentials or bearer tokens.
 
+## HTTP 429 responses or unexpected throttling
+
+If an internet-facing deployment uses the repository Nginx reference or another gateway/WAF policy, HTTP `429 Too Many Requests` normally means an edge rate budget was exceeded rather than an application authentication failure.
+
+- Identify whether the affected request is `/api/auth/login` or normal `/api/` traffic because the reference gives them separate budgets.
+- Check the reverse-proxy rate-limit log/counter for the request time and route class without logging bearer tokens or request bodies.
+- Determine the client address actually used as the rate-limit key. If many legitimate users share one NAT address, a per-IP policy may require measured tuning.
+- If a CDN, WAF, or load balancer is upstream, verify the configured trusted real-IP chain. Never fix bypasses by blindly trusting arbitrary `X-Forwarded-For` headers from public clients.
+- Confirm the proxy and Spring service clocks are sane before comparing incident timestamps.
+- Reproduce with a controlled representative request rate before increasing limits. Do not permanently raise login or global API budgets just to hide a slow backend or abusive traffic source.
+
+See [`rate-limiting.md`](rate-limiting.md) for the validation checklist and [`../deploy/nginx/libracore.conf`](../deploy/nginx/libracore.conf) for the reference edge policy.
+
 ## Browser reports network error
 
 Verify the backend origin/API base and CORS configuration. The frontend default is `http://localhost:8080/api`; `VITE_API_BASE_URL` is compiled into the frontend build. Ensure the browser origin is included in `APP_CORS_ALLOWED_ORIGINS`.

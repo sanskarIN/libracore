@@ -16,18 +16,21 @@ This model covers the React web client, Spring Boot API, PostgreSQL database, au
 
 ## Trust boundaries
 
-1. Browser ↔ HTTP API.
-2. API ↔ PostgreSQL.
-3. API ↔ SMTP provider when enabled.
-4. Operator workstation ↔ import/export files.
-5. Backup/restore tooling ↔ database/storage.
-6. CI/repository ↔ deployment environment.
+1. Browser ↔ TLS reverse proxy / deployment edge.
+2. Reverse proxy / deployment edge ↔ HTTP API.
+3. API ↔ PostgreSQL.
+4. API ↔ SMTP provider when enabled.
+5. Operator workstation ↔ import/export files.
+6. Backup/restore tooling ↔ database/storage.
+7. CI/repository ↔ deployment environment.
 
 ## Primary threats and mitigations
 
 | Threat | Example | Main mitigations |
 |---|---|---|
 | Credential theft | password/session token disclosure | password hashing, opaque sessions, no secret logging, TLS required in production |
+| Credential guessing / request flooding | repeated login or high-rate API traffic | edge rate limits, bounded bursts/body sizes/timeouts, monitoring, authentication/session controls |
+| Forwarded-address spoofing | attacker supplies fake `X-Forwarded-For` to evade source-based limits | explicit trusted-proxy/real-IP configuration; do not trust arbitrary public forwarded headers |
 | Broken access control | member invoking staff endpoint | Spring Security role checks and ownership checks in service/controller boundaries |
 | Injection | malicious query/import values | parameterized Spring JDBC, validation, bounded inputs, CSV parser limits |
 | Session abuse | stolen/replayed bearer token | server-side expiry/revocation, logout, short configured TTL, protected transport |
@@ -42,18 +45,20 @@ This model covers the React web client, Spring Boot API, PostgreSQL database, au
 ## Abuse cases
 
 - Repeated login guessing.
+- Sustained or burst request flooding intended to exhaust application/database capacity.
+- Spoofed forwarded-client headers intended to bypass per-source edge controls.
 - Staff using search/export beyond legitimate duties.
 - Member attempting to modify another member's reservation or loan.
 - Crafted CSV designed to exhaust memory or confuse spreadsheet consumers.
 - Accession/barcode collisions intended to issue the wrong copy.
 - Operator accidentally enabling bootstrap credentials or permissive CORS in production.
 
-Rate limiting should be enforced at the reverse proxy/API gateway or added at the application edge before internet-facing deployment. Exported CSV should be treated as untrusted when opened in spreadsheet software; avoid introducing formula interpretation from untrusted fields.
+Internet-facing rate limiting should be enforced at the reverse proxy/API gateway or another reviewed application edge. The repository provides a reference Nginx policy and detailed trust/tuning guidance in `deploy/nginx/libracore.conf` and `docs/rate-limiting.md`; deployment-specific values still require measurement and trusted-client-IP validation. Exported CSV should be treated as untrusted when opened in spreadsheet software; avoid introducing formula interpretation from untrusted fields.
 
 ## Residual risks
 
-A self-hosted application cannot protect data from a fully compromised database administrator, operating system, browser, reverse proxy, or SMTP account. LibraCore also cannot define an institution's lawful retention/consent policy. Those risks require deployment, governance, and operational controls outside the application.
+A self-hosted application cannot protect data from a fully compromised database administrator, operating system, browser, reverse proxy, or SMTP account. Source-IP rate limiting also cannot reliably distinguish many legitimate users behind one shared NAT from a single abusive client, and it is not a substitute for account-aware controls where those are required. LibraCore cannot define an institution's lawful retention/consent policy. Those risks require deployment, governance, and operational controls outside the application.
 
 ## Review triggers
 
-Revisit this model when adding external identity providers, object/file uploads, public registration, payments, cloud storage, mobile clients, multi-tenant hosting, third-party analytics, or new network integrations.
+Revisit this model when adding external identity providers, object/file uploads, public registration, payments, cloud storage, mobile clients, multi-tenant hosting, third-party analytics, new network integrations, or application-level/distributed rate-limit state.
